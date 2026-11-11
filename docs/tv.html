@@ -126,7 +126,9 @@
   var GRACE_MS = 15 * 60 * 1000; // message ignoré 15 min après l'heure de retour
   var C = window.ECRAN_CONFIG;
   var MEDIA_BASE = C.supabaseUrl + '/storage/v1/object/public/media/';
-  var offset = 0, state = null, media = [], mediaKey = null, idx = -1, slideTimer = null, current = null, msgKey = '';
+  var PHOTOS_BETWEEN_VIDEOS = 3; // priorité aux vidéos : une vidéo toutes les 3 photos
+  var rawMedia = [], galleries = {};
+  var offset = 0, state = null, media = [], mediaKey = null, slideTimer = null, current = null, msgKey = '';
 
   function $(id) { return document.getElementById(id); }
   function now() { return Date.now() + offset; }
@@ -180,13 +182,11 @@
         state = {
           message: m,
           slideSeconds: row.slide_seconds,
-          media: (row.media || []).map(function (x) {
-            return { name: x.path, type: x.type, url: MEDIA_BASE + encodeURIComponent(x.path) };
-          })
         };
+        rawMedia = row.media || [];
         renderQr(row.test_drive_url || '');
         renderMessage();
-        updateMedia(state.media);
+        updateMedia(expandMedia(rawMedia));
         $('offline').className = '';
       })
       .catch(function () { $('offline').className = 'on'; })
@@ -236,11 +236,53 @@
   }
 
   // --- Diaporama ---
+  // Les médias de type "gallery" pointent vers une liste (ex. tesla-gallery.json) chargée une seule fois
+  function expandMedia(list) {
+    var out = [];
+    list.forEach(function (x) {
+      if (x.type === 'gallery') {
+        var g = galleries[x.url];
+        if (g) { out = out.concat(g); return; }
+        galleries[x.url] = [];
+        fetch(x.url).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+          .then(function (items) { galleries[x.url] = items; updateMedia(expandMedia(rawMedia)); })
+          .catch(function () { delete galleries[x.url]; });
+      } else {
+        out.push({ name: x.path, type: x.type, url: MEDIA_BASE + encodeURIComponent(x.path) });
+      }
+    });
+    return out;
+  }
+
+  function shuffle(a) {
+    a = a.slice();
+    for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+
+  // Prochain média : les photos et les vidéos tournent chacune dans un ordre mélangé,
+  // avec une vidéo intercalée toutes les PHOTOS_BETWEEN_VIDEOS photos
+  var photoQueue = [], videoQueue = [], photosSinceVideo = 0;
+  function pickNext() {
+    var photos = media.filter(function (m) { return m.type !== 'video'; });
+    var videos = media.filter(function (m) { return m.type === 'video'; });
+    if (videos.length && (photosSinceVideo >= PHOTOS_BETWEEN_VIDEOS || !photos.length)) {
+      photosSinceVideo = 0;
+      if (!videoQueue.length) videoQueue = shuffle(videos);
+      return videoQueue.shift();
+    }
+    photosSinceVideo++;
+    if (!photoQueue.length) photoQueue = shuffle(photos);
+    return photoQueue.shift();
+  }
+
   function updateMedia(list) {
     var key = list.map(function (m) { return m.name; }).join('|');
     if (key === mediaKey) return;
     mediaKey = key;
     media = list;
+    photoQueue = [];
+    videoQueue = [];
     toggle($('idle'), !media.length);
     document.body.classList.toggle('is-idle', !media.length);
     if (!media.length) {
@@ -250,9 +292,8 @@
     }
     var pos = -1;
     if (current) media.forEach(function (m, i) { if (m.url === current.getAttribute('data-url')) pos = i; });
-    if (pos === -1) { idx = -1; next(); }
+    if (pos === -1) next();
     else {
-      idx = pos;
       // un seul média restant : on garde l'image fixe / la vidéo en boucle
       if (media.length === 1) { clearTimeout(slideTimer); if (current.tagName === 'VIDEO') current.loop = true; }
       else if (current.tagName === 'VIDEO') current.loop = false;
@@ -269,8 +310,7 @@
     clearTimeout(slideTimer);
     slideTimer = null;
     if (!media.length) return;
-    idx = (idx + 1) % media.length;
-    var m = media[idx];
+    var m = pickNext();
     var isVideo = m.type === 'video';
     var el = document.createElement(isVideo ? 'video' : 'img');
     var done = false;
@@ -294,7 +334,7 @@
       if (isVideo) {
         var p = el.play();
         if (p && p.catch) p.catch(function () {});
-        slideTimer = setTimeout(next, 15 * 60 * 1000); // sécurité si "ended" ne vient jamais
+        slideTimer = setTimeout(next, 3 * 60 * 1000); // sécurité si "ended" ne vient jamais
       } else if (media.length > 1) {
         slideTimer = setTimeout(next, state.slideSeconds * 1000);
       }

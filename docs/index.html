@@ -77,6 +77,10 @@
   .media .item { position: relative; aspect-ratio: 16/10; border-radius: 8px; overflow: hidden; background: #000; }
   .media img, .media video { width: 100%; height: 100%; object-fit: cover; display: block; }
   .media .del { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; padding: 0; border-radius: 50%; background: rgba(0,0,0,.65); color: #fff; font-size: 16px; }
+  .media .item.gallery { grid-column: span 3; aspect-ratio: 16/6; }
+  .media .glabel { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 12px 10px; color: #fff; font-size: 13px;
+    background: linear-gradient(transparent, rgba(0,0,0,.75)); }
+  .media .glabel b { display: block; font-size: 16px; }
   .media .vid { position: absolute; left: 6px; bottom: 4px; color: #fff; font-size: 11px; font-weight: 600; text-shadow: 0 1px 3px #000; }
   .progress { height: 4px; background: var(--bg); border-radius: 4px; margin-top: 12px; overflow: hidden; display: none; }
   .progress div { height: 100%; width: 0; background: var(--blue); transition: width .2s; }
@@ -112,6 +116,7 @@
   #login button { width: 100%; margin-top: 14px; padding: 14px; }
   #login .err { color: #ff5a6e; font-size: 14px; margin-top: 14px; min-height: 1.2em; }
   #app[hidden] { display: none; }
+  [hidden] { display: none !important; }
 </style>
 </head>
 <body>
@@ -165,6 +170,7 @@
       <label class="btn primary full" for="upload" style="margin:0;color:#fff;font-size:15px">+ Ajouter des photos / vidéos</label>
       <input type="file" id="upload" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" multiple hidden>
       <div class="progress" id="progress"><div></div></div>
+      <button class="full" id="addGallery" style="margin-top:10px" hidden>+ Ajouter la galerie officielle Tesla (vidéos et photos)</button>
       <p class="muted" style="margin-top:10px">Format paysage 16:9 conseillé. Vidéos en MP4 (H.264), sans son, 50 Mo max.</p>
     </div>
     <div class="media" id="media" style="margin-top:12px"></div>
@@ -224,6 +230,8 @@ const GRACE_MS = 15 * 60 * 1000;          // message ignoré 15 min après l'heu
 const MAX_FILE = 50 * 1024 * 1024;        // limite du plan gratuit Supabase
 const MEDIA_TYPES = { 'image/jpeg': 'image', 'image/png': 'image', 'image/webp': 'image', 'image/gif': 'image', 'video/mp4': 'video', 'video/webm': 'video' };
 const MEDIA_BASE = C.supabaseUrl + '/storage/v1/object/public/media/';
+const TESLA_GALLERY = 'tesla-gallery.json'; // photos et vidéos officielles, lues directement chez Tesla
+const galleryInfo = {};
 const sb = supabase.createClient(C.supabaseUrl, C.supabaseKey);
 let row = null, offset = 0, customMinutes = 10;
 
@@ -334,8 +342,8 @@ function renderStatus() {
     el.append(
       h('div', { class: 'live' }, h('span', { class: 'dot' }), 'Diaporama'),
       h('div', { class: 'title' }, 'Aucun message affiché'),
-      h('div', { class: 'muted', style: 'margin-top:4px' }, row.media.length
-        ? row.media.length + ' photo(s)/vidéo(s) en rotation'
+      h('div', { class: 'muted', style: 'margin-top:4px' }, mediaCount()
+        ? mediaCount() + ' photo(s)/vidéo(s) en rotation'
         : 'Écran d’accueil (ajoutez des photos dans Médias)'));
     return;
   }
@@ -377,9 +385,26 @@ function renderMinuteChips() {
     h('button', { class: 'chip' + (n === customMinutes ? ' sel' : ''), onclick: () => { customMinutes = n; renderMinuteChips(); } }, n ? n + ' min' : 'Aucune')));
 }
 
+function loadGallery(url) {
+  if (galleryInfo[url]) return;
+  galleryInfo[url] = { loading: true };
+  fetch(url).then(r => r.json()).then(items => {
+    galleryInfo[url] = { items, videos: items.filter(i => i.type === 'video').length, photos: items.filter(i => i.type !== 'video').length };
+    mediaKey = null;
+    renderMedia();
+    renderStatus();
+  }).catch(() => { delete galleryInfo[url]; });
+}
+function mediaCount() {
+  return row.media.reduce((n, m) => n + (m.type === 'gallery' ? (galleryInfo[m.url]?.items?.length || 0) : 1), 0);
+}
+
 let mediaKey = null;
 function renderMedia() {
-  const key = row.media.map(m => m.path).join('|');
+  const hasGallery = row.media.some(m => m.type === 'gallery' && m.url === TESLA_GALLERY);
+  $('#addGallery').hidden = hasGallery;
+  row.media.filter(m => m.type === 'gallery').forEach(m => loadGallery(m.url));
+  const key = row.media.map(m => m.path || m.url).join('|');
   if (key === mediaKey) return;
   mediaKey = key;
   if (!row.media.length) {
@@ -387,6 +412,14 @@ function renderMedia() {
     return;
   }
   $('#media').replaceChildren(...row.media.map(m => {
+    if (m.type === 'gallery') {
+      const g = galleryInfo[m.url];
+      const cover = g?.items?.find(i => i.type === 'image');
+      return h('div', { class: 'item gallery' },
+        cover ? h('img', { src: cover.thumb, alt: '' }) : null,
+        h('span', { class: 'glabel' }, h('b', {}, 'Galerie Tesla'), g?.items ? g.videos + ' vidéos · ' + g.photos + ' photos' : 'Chargement…'),
+        h('button', { class: 'del', 'aria-label': 'Retirer la galerie', onclick: () => confirm('Retirer toute la galerie Tesla du diaporama ?') && act(() => removeMediaEntry(e => e.type === 'gallery' && e.url === m.url), 'Galerie retirée') }, '×'));
+    }
     const url = MEDIA_BASE + encodeURIComponent(m.path);
     return h('div', { class: 'item' },
       m.type === 'video' ? h('video', { src: url + '#t=1', muted: true, playsinline: true, preload: 'metadata' }) : h('img', { src: url, loading: 'lazy', alt: '' }),
@@ -421,12 +454,23 @@ async function uploadMedia(file) {
   const fresh = await fetchRow();
   await save({ media: [...fresh.media, { path, type }] });
 }
+async function removeMediaEntry(match) {
+  const fresh = await fetchRow();
+  await save({ media: fresh.media.filter(e => !match(e)) });
+}
+async function addGallery() {
+  const fresh = await fetchRow();
+  if (fresh.media.some(e => e.type === 'gallery' && e.url === TESLA_GALLERY)) return;
+  // en tête de liste : les photos ajoutées à la main restent dans la rotation
+  await save({ media: [{ type: 'gallery', url: TESLA_GALLERY }, ...fresh.media] });
+}
 async function deleteMedia(path) {
   const fresh = await fetchRow();
   await save({ media: fresh.media.filter(m => m.path !== path) });
   await sb.storage.from('media').remove([path]);
 }
 
+$('#addGallery').addEventListener('click', () => act(addGallery, 'Galerie Tesla ajoutée ✓'));
 $('#upload').addEventListener('change', async e => {
   const files = [...e.target.files];
   e.target.value = '';
@@ -500,7 +544,7 @@ async function showApp() {
   await refresh();
   // Mise à jour instantanée quand un collègue change quelque chose
   sb.channel('screen').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'screen' }, p => apply(p.new)).subscribe();
-  setInterval(refresh, 15000);
+  setInterval(refresh, 30000);
   setInterval(tick, 1000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
 }
