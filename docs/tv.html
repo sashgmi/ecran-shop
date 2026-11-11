@@ -28,23 +28,30 @@
   .hidden { display: none !important; }
 
   /* Barre de marque */
-  #brandbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; justify-content: space-between; align-items: flex-end;
-    padding: 6vh 4vw 3.5vh; background: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,.65)); }
-  #brandbar .brand { display: flex; align-items: center; }
-  #brandbar .t { height: 4.4vh; margin-right: 1.4vw; }
-  #brandbar .word { height: 2vh; }
-  #clock { font-size: 3.4vh; font-weight: 300; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  #brandbar, #topbar { position: fixed; left: 0; right: 0; height: 16vh; z-index: 4; display: none; }
+  #brandbar { bottom: 0; background: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,.65)); }
+  #topbar { top: 0; background: linear-gradient(rgba(0,0,0,.6), rgba(0,0,0,0)); }
+  body.has-bottom #brandbar, body.has-top #topbar { display: block; }
+  .slot { position: fixed; z-index: 5; display: flex; flex-direction: column; }
+  .slot > * { margin-top: 1.6vh; }
+  .slot > *:first-child { margin-top: 0; }
+  .slot.top { top: 4vh; } .slot.bottom { bottom: 3.5vh; }
+  .slot.left { left: 3.2vw; align-items: flex-start; }
+  .slot.center { left: 50%; transform: translateX(-50%); align-items: center; }
+  .slot.right { right: 3.2vw; align-items: flex-end; }
+  #logoEl { display: flex; align-items: center; filter: drop-shadow(0 0 1vh rgba(0,0,0,.45)); }
+  #logoEl .t { height: 4.4vh; margin-right: 1.4vw; }
+  #logoEl .word { height: 2vh; }
+  #clock { font-size: 3.4vh; font-weight: 300; font-variant-numeric: tabular-nums; white-space: nowrap; text-shadow: 0 0 1.2vh rgba(0,0,0,.6); }
   #clockDate { color: var(--muted); margin-right: 1.2vw; }
-  body.no-logo #brandbar .brand, body.no-clock #clock { visibility: hidden; }
-  body.clock-center #clock { position: absolute; left: 50%; bottom: 3.5vh; transform: translateX(-50%); }
+  body.no-logo #logoEl, body.no-clock #clock { display: none; }
 
   /* Petit QR pendant le diaporama */
-  #qrCorner { position: fixed; top: 4vh; right: 3vw; z-index: 4; background: rgba(0,0,0,.55); border-radius: 1.2vh; padding: 1.4vh;
-    display: flex; align-items: center; transition: opacity .6s; }
+  #qrCorner { background: rgba(0,0,0,.55); border-radius: 1.2vh; padding: 1.4vh; display: flex; align-items: center; }
   #qrCorner .qr { background: #fff; padding: .8vh; border-radius: .6vh; width: 13vh; height: 13vh; }
   #qrCorner .txt { font-size: 1.9vh; line-height: 1.35; margin-left: 1.6vh; margin-right: .6vh; white-space: nowrap; }
   #qrCorner .txt b { display: block; font-size: 2.1vh; margin-bottom: .4vh; }
-  body.is-idle:not(.has-msg) #brandbar .brand { visibility: hidden; }
+  body.is-idle:not(.has-msg) #logoEl { display: none; }
   .qr img, .qr canvas { width: 100% !important; height: 100% !important; display: block; }
 
   /* Message */
@@ -81,7 +88,9 @@
   body.msg-cinema #mUnit { font-size: 5vh; color: rgba(255,255,255,.58); }
   body.msg-cinema #mAt { font-size: 2.8vh; margin-top: 1vh; color: rgba(255,255,255,.6); }
   body.msg-cinema #mBar { display: none; }
-  body.msg-cinema.has-msg #brandbar { visibility: hidden; }
+  /* Style cinéma : rien en bas pendant le message */
+  body.msg-cinema.has-msg #brandbar, body.msg-cinema.has-msg .slot.bottom { visibility: hidden; }
+  body.is-idle:not(.has-msg) #topbar, body.is-idle:not(.has-msg) #brandbar { display: none; }
   #msg .side-old { width: 30vh; text-align: center; flex-shrink: 0; }
   #msg .side .qr { background: #fff; padding: 2vh; border-radius: 1.6vh; width: 30vh; height: 30vh; }
   #msg .side h3 { font-size: 2.8vh; font-weight: 500; margin-top: 3vh; }
@@ -129,13 +138,19 @@
     </div>
   </div>
 
-  <div id="brandbar">
-    <div class="brand">
-      <img class="t" src="brand/t.svg" alt="">
-      <img class="word" src="brand/wordmark-white.png" alt="Tesla">
-    </div>
-    <div id="clock"><span id="clockDate"></span><span id="clockTime"></span></div>
+  <div id="topbar"></div>
+  <div id="brandbar"></div>
+  <div class="slot top left" id="slot-tl"></div>
+  <div class="slot top center" id="slot-tc"></div>
+  <div class="slot top right" id="slot-tr"></div>
+  <div class="slot bottom left" id="slot-bl"></div>
+  <div class="slot bottom center" id="slot-bc"></div>
+  <div class="slot bottom right" id="slot-br"></div>
+  <div id="logoEl">
+    <img class="t" src="brand/t.svg" alt="">
+    <img class="word" src="brand/wordmark-white.png" alt="Tesla">
   </div>
+  <div id="clock"><span id="clockDate"></span><span id="clockTime"></span></div>
 
   <div id="fsHint">Appuyez sur OK / Entrée pour le plein écran</div>
   <div id="offline"></div>
@@ -195,6 +210,30 @@
     }).catch(function () {});
   }
 
+  // Emplacements : tl tc tr (haut) / bl bc br (bas). Anciennes valeurs de l'heure : right → br, center → bc
+  var OLD_POS = { right: 'br', center: 'bc' };
+  var SLOTS = ['tl', 'tc', 'tr', 'bl', 'bc', 'br'];
+  var placed = '';
+  function placeElements(display) {
+    var pos = function (v, def) { v = OLD_POS[v] || v; return SLOTS.indexOf(v) >= 0 ? v : def; };
+    var items = [['qrCorner', pos(display.qrPos, 'tr')], ['logoEl', pos(display.logoPos, 'bl')], ['clock', pos(display.clockPos, 'br')]];
+    // un léger dégradé en haut / en bas uniquement là où un élément visible est placé
+    var shown = [display.qr !== false && !!qrUrl, display.logo !== false, display.clock !== false];
+    var rows = items.filter(function (x, i) { return shown[i]; }).map(function (x) { return x[1].charAt(0); }).join('');
+    document.body.classList.toggle('has-top', rows.indexOf('t') >= 0);
+    document.body.classList.toggle('has-bottom', rows.indexOf('b') >= 0);
+    var key = items.map(function (x) { return x[1]; }).join(',');
+    if (key === placed) return;
+    placed = key;
+    // Plusieurs éléments au même endroit s'empilent : le QR code reste le plus loin du bord de l'écran
+    var order = { t: ['logoEl', 'clock', 'qrCorner'], b: ['qrCorner', 'logoEl', 'clock'] };
+    ['t', 'b'].forEach(function (row) {
+      order[row].forEach(function (id) {
+        items.forEach(function (x) { if (x[0] === id && x[1].charAt(0) === row) $('slot-' + x[1]).appendChild($(id)); });
+      });
+    });
+  }
+
   function poll() {
     rest('screen?id=eq.1&select=*')
       .then(function (rows) {
@@ -211,7 +250,7 @@
         renderQr(display.qr === false ? '' : (row.test_drive_url || ''));
         document.body.classList.toggle('no-logo', display.logo === false);
         document.body.classList.toggle('no-clock', display.clock === false);
-        document.body.classList.toggle('clock-center', display.clockPos === 'center');
+        placeElements(display);
         document.body.classList.toggle('msg-cinema', display.msgStyle === 'cinema');
         renderMessage();
         updateMedia(expandMedia(rawMedia));
@@ -398,6 +437,7 @@
   // Rechargement complet toutes les 6 h (mises à jour, mémoire du navigateur TV)
   setTimeout(function () { location.reload(); }, 6 * 3600 * 1000);
 
+  placeElements({});
   setInterval(tick, 1000);
   setInterval(syncClock, 10 * 60 * 1000);
   syncClock();

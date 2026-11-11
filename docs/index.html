@@ -77,6 +77,14 @@
   .media .item { position: relative; aspect-ratio: 16/10; border-radius: 8px; overflow: hidden; background: #000; }
   .media img, .media video { width: 100%; height: 100%; object-fit: cover; display: block; }
   .media .del { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; padding: 0; border-radius: 50%; background: rgba(0,0,0,.65); color: #fff; font-size: 16px; }
+  /* Choix de l'emplacement : un mini écran avec 6 positions */
+  .placer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .placer:first-child { padding-top: 0; }
+  .screen { position: relative; width: 132px; aspect-ratio: 16/9; flex-shrink: 0; border-radius: 6px; background: #1d2026; border: 2px solid #3a3d44;
+    display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: 1fr 1fr; padding: 3px; gap: 3px; }
+  .screen button { padding: 0; border-radius: 4px; background: transparent; font-size: 13px; color: rgba(255,255,255,.35); }
+  .screen button.sel { background: var(--blue); color: #fff; }
+  .screen.off { opacity: .35; }
   .media .item.gallery { grid-column: span 3; aspect-ratio: 16/6; }
   .media .glabel { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 12px 10px; color: #fff; font-size: 13px;
     background: linear-gradient(transparent, rgba(0,0,0,.75)); }
@@ -191,18 +199,22 @@
 
     <h2>Affichage TV</h2>
     <div class="card">
-      <label class="check" style="margin-top:0"><input type="checkbox" data-display="qr"> QR code « Réservez votre Test Drive »</label>
-      <label class="check"><input type="checkbox" data-display="logo"> Logo Tesla (en bas à gauche)</label>
-      <label class="check"><input type="checkbox" data-display="clock"> Date et heure</label>
+      <div class="placer">
+        <label class="check" style="margin-top:0"><input type="checkbox" data-display="logo"> Logo Tesla</label>
+        <div class="screen" data-pos-of="logoPos"></div>
+      </div>
+      <div class="placer">
+        <label class="check" style="margin-top:0"><input type="checkbox" data-display="clock"> Date et heure</label>
+        <div class="screen" data-pos-of="clockPos"></div>
+      </div>
+      <div class="placer">
+        <label class="check" style="margin-top:0"><input type="checkbox" data-display="qr"> QR code Test Drive</label>
+        <div class="screen" data-pos-of="qrPos"></div>
+      </div>
       <label>Style du message</label>
       <div class="chips" id="msgStyle">
         <button class="chip" data-style="left">Dégradé à gauche (A1)</button>
         <button class="chip" data-style="cinema">Style cinéma (A3)</button>
-      </div>
-      <label>Position de la date et de l’heure</label>
-      <div class="chips" id="clockPos">
-        <button class="chip" data-pos="right">À droite</button>
-        <button class="chip" data-pos="center">En bas au centre</button>
       </div>
     </div>
 
@@ -459,12 +471,21 @@ function renderPresetEdit() {
 }
 
 // --- Affichage TV (QR code, logo, date/heure) ---
-const DISPLAY_DEFAULTS = { qr: true, logo: true, clock: true, clockPos: 'right', msgStyle: 'left' };
+const DISPLAY_DEFAULTS = { qr: true, logo: true, clock: true, logoPos: 'bl', clockPos: 'br', qrPos: 'tr', msgStyle: 'left' };
+const POSITIONS = [['tl', '↖', 'En haut à gauche'], ['tc', '↑', 'En haut au centre'], ['tr', '↗', 'En haut à droite'],
+  ['bl', '↙', 'En bas à gauche'], ['bc', '↓', 'En bas au centre'], ['br', '↘', 'En bas à droite']];
+const OLD_POS = { right: 'br', center: 'bc' }; // anciennes valeurs de la position de l'heure
 const display = () => Object.assign({}, DISPLAY_DEFAULTS, row.display || {});
 function renderDisplay() {
   const d = display();
   document.querySelectorAll('[data-display]').forEach(cb => { cb.checked = d[cb.dataset.display]; });
-  document.querySelectorAll('#clockPos .chip').forEach(b => b.classList.toggle('sel', b.dataset.pos === d.clockPos));
+  document.querySelectorAll('[data-pos-of]').forEach(sc => {
+    const key = sc.dataset.posOf, cur = OLD_POS[d[key]] || d[key];
+    if (!sc.children.length) sc.append(...POSITIONS.map(([v, arrow, label]) =>
+      h('button', { 'data-v': v, 'aria-label': label, title: label, onclick: () => act(() => saveDisplay({ [key]: v }), label) }, arrow)));
+    [...sc.children].forEach(b => b.classList.toggle('sel', b.dataset.v === cur));
+    sc.classList.toggle('off', !d[key.replace('Pos', '')]);
+  });
   document.querySelectorAll('#msgStyle .chip').forEach(b => b.classList.toggle('sel', b.dataset.style === d.msgStyle));
 }
 async function saveDisplay(patch) {
@@ -476,8 +497,6 @@ document.querySelectorAll('[data-display]').forEach(cb => cb.addEventListener('c
   act(() => saveDisplay({ [cb.dataset.display]: cb.checked }), cb.checked ? 'Affiché sur la TV' : 'Masqué sur la TV')));
 document.querySelectorAll('#msgStyle .chip').forEach(b => b.addEventListener('click', () =>
   act(() => saveDisplay({ msgStyle: b.dataset.style }), 'Style du message enregistré')));
-document.querySelectorAll('#clockPos .chip').forEach(b => b.addEventListener('click', () =>
-  act(() => saveDisplay({ clockPos: b.dataset.pos }), 'Position enregistrée')));
 
 // --- Médias ---
 async function uploadMedia(file) {
