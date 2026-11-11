@@ -33,15 +33,17 @@
   #brandbar .brand { display: flex; align-items: center; }
   #brandbar .t { height: 4.4vh; margin-right: 1.4vw; }
   #brandbar .word { height: 2vh; }
-  #clock { font-size: 3.4vh; font-weight: 300; font-variant-numeric: tabular-nums; }
+  #clock { font-size: 3.4vh; font-weight: 300; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  #clockDate { color: var(--muted); margin-right: 1.2vw; }
 
   /* Petit QR pendant le diaporama */
   #qrCorner { position: fixed; top: 4vh; right: 3vw; z-index: 4; background: rgba(0,0,0,.55); border-radius: 1.2vh; padding: 1.4vh;
     display: flex; align-items: center; transition: opacity .6s; }
   #qrCorner .qr { background: #fff; padding: .8vh; border-radius: .6vh; width: 13vh; height: 13vh; }
-  #qrCorner .txt { font-size: 1.9vh; line-height: 1.35; margin-left: 1.4vh; max-width: 22vh; }
+  #qrCorner .txt { font-size: 1.9vh; line-height: 1.35; margin-left: 1.6vh; margin-right: .6vh; white-space: nowrap; }
   #qrCorner .txt b { display: block; font-size: 2.1vh; margin-bottom: .4vh; }
   body.has-msg #qrCorner { opacity: 0; }
+  body.is-idle:not(.has-msg) #brandbar .brand { visibility: hidden; }
   .qr img, .qr canvas { width: 100% !important; height: 100% !important; display: block; }
 
   /* Message */
@@ -109,7 +111,7 @@
       <img class="t" src="brand/t.svg" alt="">
       <img class="word" src="brand/wordmark-white.png" alt="Tesla">
     </div>
-    <div id="clock"></div>
+    <div id="clock"><span id="clockDate"></span><span id="clockTime"></span></div>
   </div>
 
   <div id="fsHint">Appuyez sur OK / Entrée pour le plein écran</div>
@@ -128,6 +130,9 @@
 
   function $(id) { return document.getElementById(id); }
   function now() { return Date.now() + offset; }
+  // Noms en dur : certains navigateurs TV ne connaissent pas la langue française
+  var DAYS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+  var MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   function pad(n) { return (n < 10 ? '0' : '') + n; }
   function hhmm(t) { var d = new Date(t); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
   function toggle(el, show) { if (show) el.classList.remove('hidden'); else el.classList.add('hidden'); }
@@ -192,7 +197,7 @@
   function renderMessage() {
     var m = state && state.message;
     $('msg').className = 'full' + (m ? ' on' : '');
-    document.body.className = m ? 'has-msg' : '';
+    document.body.classList.toggle('has-msg', !!m);
     if (m) {
       var k = m.at + '|' + m.title + '|' + m.sub;
       if (k !== msgKey) {
@@ -206,7 +211,9 @@
   }
 
   function tick() {
-    $('clock').textContent = hhmm(now());
+    var d = new Date(now());
+    $('clockDate').textContent = DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + MONTHS[d.getMonth()];
+    $('clockTime').textContent = hhmm(d.getTime());
     var m = state && state.message;
     if (!m) return;
     toggle($('mCount'), !!m.until);
@@ -235,6 +242,7 @@
     mediaKey = key;
     media = list;
     toggle($('idle'), !media.length);
+    document.body.classList.toggle('is-idle', !media.length);
     if (!media.length) {
       clearTimeout(slideTimer);
       if (current) { dispose(current); current = null; }
