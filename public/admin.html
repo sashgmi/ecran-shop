@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Écran Shop">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="/brand/t.svg">
+<link rel="apple-touch-icon" href="/brand/t.svg">
+<title>Écran Shop - Tesla</title>
+<style>
+  :root { --fg: #171a20; --muted: #5c5e62; --line: #e2e3e3; --bg: #f4f4f4; --card: #fff; --blue: #3e6ae1; --red: #e31937; --green: #12a150; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg: #f4f4f4; --muted: #a2a3a5; --line: #2c2f35; --bg: #000; --card: #15171c; }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--fg);
+    -webkit-font-smoothing: antialiased; padding-bottom: calc(76px + env(safe-area-inset-bottom)); line-height: 1.4; }
+  header { position: sticky; top: 0; z-index: 10; background: #000; color: #fff; padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+    display: flex; align-items: center; justify-content: space-between; }
+  header .brand { display: flex; align-items: center; gap: 10px; font-size: 13px; color: rgba(255,255,255,.7); }
+  header img { height: 14px; }
+  header .wordmark { font-weight: 600; letter-spacing: .4em; font-size: 14px; color: #fff; }
+  header a { color: #fff; font-size: 13px; text-decoration: none; border: 1px solid rgba(255,255,255,.3); border-radius: 99px; padding: 5px 12px; }
+  main { max-width: 640px; margin: 0 auto; padding: 16px; }
+  section[data-tab] { display: none; }
+  section[data-tab].active { display: block; }
+  h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 26px 4px 10px; }
+  h2:first-child { margin-top: 6px; }
+  .card { background: var(--card); border-radius: 12px; padding: 16px; }
+  .muted { color: var(--muted); font-size: 13px; }
+
+  /* Statut */
+  .status .live { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+  .status.on .dot { background: var(--red); animation: pulse 1.4s infinite; }
+  @keyframes pulse { 50% { opacity: .3; } }
+  .status .title { font-size: 20px; font-weight: 500; margin-top: 8px; }
+  .status .count { font-size: 15px; margin-top: 6px; }
+  .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .extend { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
+  .extend.minus button { background: transparent; border: 1px solid var(--line); color: var(--muted); }
+
+  button, .btn { font: inherit; font-size: 15px; font-weight: 500; border: 0; border-radius: 8px; padding: 12px 14px; cursor: pointer;
+    background: var(--bg); color: var(--fg); text-decoration: none; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  button:active, .btn:active { transform: scale(.97); }
+  .primary { background: var(--blue); color: #fff; }
+  .danger { background: var(--red); color: #fff; }
+  .grow { flex: 1; }
+  .full { width: 100%; }
+
+  /* Raccourcis */
+  .presets { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .preset { background: var(--card); border-radius: 12px; padding: 14px; text-align: left; display: block; min-height: 88px; position: relative; }
+  .preset .t { font-size: 15px; font-weight: 500; line-height: 1.25; padding-right: 4px; }
+  .preset .m { display: inline-block; margin-top: 10px; font-size: 13px; font-weight: 600; background: var(--fg); color: var(--card); border-radius: 99px; padding: 3px 10px; }
+  .preset .m.none { background: transparent; color: var(--muted); padding: 3px 0; font-weight: 400; }
+
+  label { display: block; font-size: 13px; color: var(--muted); margin: 14px 0 6px; }
+  label:first-child { margin-top: 0; }
+  input[type=text], input[type=number], textarea { width: 100%; font: inherit; font-size: 16px; color: var(--fg); background: var(--bg);
+    border: 1px solid transparent; border-radius: 8px; padding: 12px; outline: none; }
+  input:focus, textarea:focus { border-color: var(--fg); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { padding: 8px 13px; font-size: 14px; border-radius: 99px; background: var(--bg); }
+  .chip.sel { background: var(--fg); color: var(--card); }
+  .check { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--fg); margin-top: 14px; }
+  .check input { width: 18px; height: 18px; accent-color: var(--blue); }
+
+  /* Demandes */
+  .lead { background: var(--card); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; border-left: 4px solid var(--blue); }
+  .lead.done { border-left-color: transparent; opacity: .65; }
+  .lead .top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .lead .name { font-size: 17px; font-weight: 600; }
+  .lead .meta { font-size: 13px; color: var(--muted); margin-top: 4px; word-break: break-word; }
+  .lead .msg { margin-top: 10px; font-size: 15px; white-space: pre-wrap; word-break: break-word; background: var(--bg); border-radius: 8px; padding: 10px 12px; }
+  .lead .actions button, .lead .actions .btn { padding: 9px 12px; font-size: 14px; }
+  .badge { display: inline-block; min-width: 18px; height: 18px; line-height: 18px; padding: 0 5px; border-radius: 99px; background: var(--red); color: #fff;
+    font-size: 11px; font-weight: 700; text-align: center; }
+  .empty { text-align: center; color: var(--muted); padding: 32px 16px; font-size: 14px; }
+
+  /* Médias */
+  .media { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .media .item { position: relative; aspect-ratio: 16/10; border-radius: 8px; overflow: hidden; background: #000; }
+  .media img, .media video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .media .del { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; padding: 0; border-radius: 50%; background: rgba(0,0,0,.65); color: #fff; font-size: 16px; }
+  .media .vid { position: absolute; left: 6px; bottom: 4px; color: #fff; font-size: 11px; font-weight: 600; text-shadow: 0 1px 3px #000; }
+  .progress { height: 4px; background: var(--bg); border-radius: 4px; margin-top: 12px; overflow: hidden; display: none; }
+  .progress div { height: 100%; width: 0; background: var(--blue); transition: width .2s; }
+
+  /* Réglages */
+  .prow { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .prow:last-child { border-bottom: 0; }
+  .prow .t { flex: 1; min-width: 0; font-size: 14px; }
+  .prow .t small { display: block; color: var(--muted); }
+  .prow button { padding: 6px 10px; font-size: 13px; }
+
+  /* Navigation */
+  nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--card); border-top: 1px solid var(--line);
+    display: flex; padding-bottom: env(safe-area-inset-bottom); }
+  nav button { flex: 1; background: none; border-radius: 0; flex-direction: column; gap: 3px; font-size: 11px; font-weight: 500; color: var(--muted); padding: 10px 4px; position: relative; }
+  nav button.active { color: var(--fg); }
+  nav svg { width: 22px; height: 22px; }
+  .badge[hidden], nav button[hidden] { display: none; }
+  nav .badge { position: absolute; top: 5px; left: calc(50% + 6px); }
+
+  #toast { position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(20px); z-index: 20;
+    background: var(--fg); color: var(--card); padding: 11px 18px; border-radius: 99px; font-size: 14px; font-weight: 500; opacity: 0;
+    transition: all .25s; pointer-events: none; white-space: nowrap; }
+  #toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.err { background: var(--red); color: #fff; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <img src="/brand/t.svg" alt="" style="height:20px"><img src="/brand/wordmark-white.png" alt="Tesla" style="height:11px">
+    <span>Écran shop</span>
+  </div>
+  <a href="/tv" target="_blank">Voir la TV ↗</a>
+</header>
+
+<main>
+  <!-- ÉCRAN -->
+  <section data-tab="screen" class="active">
+    <h2>Actuellement sur la TV</h2>
+    <div class="card status" id="status"></div>
+
+    <h2>Affichage rapide</h2>
+    <div class="presets" id="presets"></div>
+
+    <h2>Message personnalisé</h2>
+    <div class="card">
+      <label for="cTitle">Message</label>
+      <input type="text" id="cTitle" maxlength="140" placeholder="Ex. : Nous sommes en Test Drive">
+      <label for="cSub">Sous-titre (facultatif)</label>
+      <input type="text" id="cSub" maxlength="200" placeholder="Ex. : Installez-vous, nous revenons vite.">
+      <label>Retour dans</label>
+      <div class="chips" id="cMinutes"></div>
+      <label class="check"><input type="checkbox" id="cSave"> Enregistrer comme raccourci</label>
+      <button class="primary full" style="margin-top:16px" id="cSend">Afficher sur la TV</button>
+    </div>
+  </section>
+
+  <!-- DEMANDES -->
+  <section data-tab="leads">
+    <h2>Demandes clients</h2>
+    <div id="leads"></div>
+  </section>
+
+  <!-- MÉDIAS -->
+  <section data-tab="media">
+    <h2>Photos &amp; vidéos du diaporama</h2>
+    <div class="card">
+      <label class="btn primary full" for="upload" style="margin:0;color:#fff;font-size:15px">+ Ajouter des photos / vidéos</label>
+      <input type="file" id="upload" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" multiple hidden>
+      <div class="progress" id="progress"><div></div></div>
+      <p class="muted" style="margin-top:10px">Format paysage 16:9 conseillé. Vidéos en MP4 (H.264), sans son, 300 Mo max.</p>
+    </div>
+    <div class="media" id="media" style="margin-top:12px"></div>
+  </section>
+
+  <!-- RÉGLAGES -->
+  <section data-tab="settings">
+    <h2>Mon prénom</h2>
+    <div class="card">
+      <input type="text" id="me" maxlength="30" placeholder="Pour savoir qui a posté le message">
+    </div>
+
+    <h2>Diaporama</h2>
+    <div class="card">
+      <label for="slideSec">Durée d’affichage d’une photo (secondes)</label>
+      <div style="display:flex;gap:8px"><input type="number" id="slideSec" min="3" max="120" class="grow"><button id="saveSlide">OK</button></div>
+    </div>
+
+    <h2>QR code client</h2>
+    <div class="card">
+      <label for="tdUrl">Lien « Réserver un Test Drive »</label>
+      <div style="display:flex;gap:8px"><input type="text" id="tdUrl" inputmode="url" placeholder="https://www.tesla.com/…/drive" class="grow"><button id="saveTd">OK</button></div>
+      <p class="muted" style="margin-top:8px">Le QR code affiché sur la TV ouvre directement ce lien. Aucune donnée client ne passe par le site.</p>
+    </div>
+
+    <h2>Raccourcis</h2>
+    <div class="card" id="presetEdit"></div>
+    <p class="muted" style="margin:8px 4px 0">Pour ajouter un raccourci : onglet Écran → Message personnalisé → « Enregistrer comme raccourci ».</p>
+
+    <h2>Liens utiles</h2>
+    <div class="card" style="display:grid;gap:8px">
+      <a class="btn" href="/tv" target="_blank">Ouvrir l’écran TV</a>
+      <a class="btn" href="/contact" target="_blank">Ouvrir le lien du QR code</a>
+      <button id="share">Partager l’accès avec un collègue</button>
+      <button class="danger" id="logout">Se déconnecter</button>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button data-go="screen" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Écran</button>
+  <button data-go="leads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v12H8l-4 4z"/></svg>Demandes<span class="badge" id="leadBadge" hidden></span></button>
+  <button data-go="media"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg>Médias</button>
+  <button data-go="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Réglages</button>
+</nav>
+
+<div id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const MINUTE_CHOICES = [0, 5, 10, 15, 20, 30, 45, 60];
+const EXTEND_CHOICES = [5, 10, 15, 20, 25, 30];
+let state = null, offset = 0, customMinutes = 10, seenLeads = null;
+
+const store = {
+  get(k, d) { try { return localStorage.getItem(k) ?? d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+};
+
+// Petit constructeur DOM (évite innerHTML avec des données saisies par les clients)
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (k === 'class') el.className = v;
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid);
+  return el;
+}
+
+const pad = n => String(n).padStart(2, '0');
+const hhmm = t => { const d = new Date(t); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+function when(t) {
+  const d = new Date(t), today = new Date();
+  const yest = new Date(); yest.setDate(today.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return 'aujourd’hui ' + hhmm(t);
+  if (d.toDateString() === yest.toDateString()) return 'hier ' + hhmm(t);
+  return d.toLocaleDateString('fr-BE', { day: 'numeric', month: 'short' }) + ' ' + hhmm(t);
+}
+const me = () => $('#me').value.trim();
+
+let toastTimer;
+function toast(text, isErr) {
+  const t = $('#toast');
+  t.textContent = text;
+  t.className = 'on' + (isErr ? ' err' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (t.className = ''), 2200);
+}
+
+async function api(method, url, body) {
+  const opts = { method, headers: {} };
+  if (body !== undefined) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+  const r = await fetch(url, opts);
+  if (r.status === 401) { location.replace('/'); throw new Error('Session expirée'); }
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || 'Erreur');
+  if (d.now) apply(d);
+  return d;
+}
+async function act(fn, okText) {
+  try { await fn(); if (okText) { toast(okText); navigator.vibrate?.(25); } }
+  catch (e) { toast(e.message, true); }
+}
+
+// --- Rendu ---
+function apply(s) {
+  offset = s.now - Date.now();
+  state = s;
+  renderStatus();
+  renderPresets();
+  renderLeads();
+  renderMedia();
+  renderPresetEdit();
+  if (document.activeElement !== $('#slideSec')) $('#slideSec').value = s.slideSeconds;
+  if (document.activeElement !== $('#tdUrl')) $('#tdUrl').value = s.testDriveUrl || '';
+  // Onglet Demandes visible uniquement avec l'ancien système (LEADS_MODE=store)
+  $('nav [data-go="leads"]').hidden = s.leadsMode !== 'store';
+  if (s.leadsMode !== 'store' && $('section[data-tab="leads"]').classList.contains('active')) showTab('screen');
+}
+
+function renderStatus() {
+  const m = state.message, el = $('#status');
+  el.className = 'card status' + (m ? ' on' : '');
+  el.replaceChildren();
+  if (!m) {
+    el.append(
+      h('div', { class: 'live' }, h('span', { class: 'dot' }), 'Diaporama'),
+      h('div', { class: 'title' }, 'Aucun message affiché'),
+      h('div', { class: 'muted', style: 'margin-top:4px' }, state.media.length
+        ? state.media.length + ' photo(s)/vidéo(s) en rotation'
+        : 'Écran d’accueil (ajoutez des photos dans Médias)'));
+    return;
+  }
+  el.append(...[
+    h('div', { class: 'live' }, h('span', { class: 'dot' }), 'Message en direct'),
+    h('div', { class: 'title' }, m.title),
+    m.sub ? h('div', { class: 'muted', style: 'margin-top:2px' }, m.sub) : null,
+    m.until ? h('div', { class: 'count', id: 'countdown' }) : null,
+    h('div', { class: 'muted', style: 'margin-top:6px' }, 'Publié ' + when(m.at) + (m.by ? ' par ' + m.by : '')),
+    h('div', { class: 'actions' },
+      h('div', { class: 'extend' }, EXTEND_CHOICES.map(n =>
+        h('button', { onclick: () => act(() => api('POST', '/api/message/extend', { minutes: n }), '+' + n + ' min') }, '+' + n + ' min'))),
+      m.until ? h('div', { class: 'extend minus' }, EXTEND_CHOICES.map(n =>
+        h('button', { onclick: () => act(() => api('POST', '/api/message/extend', { minutes: -n }), '-' + n + ' min') }, '-' + n + ' min'))) : null,
+      h('button', { class: 'danger full', onclick: () => act(() => api('DELETE', '/api/message'), 'Message retiré') }, 'Retirer le message (on est de retour)'))].filter(Boolean));
+  tick();
+}
+
+function tick() {
+  const el = $('#countdown');
+  const m = state?.message;
+  if (!el || !m?.until) return;
+  const left = m.until - (Date.now() + offset);
+  el.textContent = left > 0
+    ? 'Retour dans ' + Math.ceil(left / 60000) + ' min · vers ' + hhmm(m.until)
+    : 'Heure de retour dépassée - la TV affiche « Retour imminent »';
+}
+
+function renderPresets() {
+  $('#presets').replaceChildren(...state.presets.map(p =>
+    h('button', { class: 'preset', onclick: () => act(() => api('POST', '/api/message', { title: p.title, sub: p.sub, minutes: p.minutes, by: me() }), 'Affiché sur la TV ✓') },
+      h('div', { class: 't' }, p.title),
+      h('span', { class: 'm' + (p.minutes ? '' : ' none') }, p.minutes ? p.minutes + ' min' : 'sans minuterie'))));
+}
+
+function renderMinuteChips() {
+  $('#cMinutes').replaceChildren(...MINUTE_CHOICES.map(n =>
+    h('button', { class: 'chip' + (n === customMinutes ? ' sel' : ''), onclick: () => { customMinutes = n; renderMinuteChips(); } }, n ? n + ' min' : 'Aucune')));
+}
+
+function renderLeads() {
+  if (state.leadsMode !== 'store') return;
+  const leads = state.leads || [];
+  const fresh = leads.filter(l => l.status === 'new');
+  const badge = $('#leadBadge');
+  badge.hidden = !fresh.length;
+  badge.textContent = fresh.length;
+  document.title = (fresh.length ? '(' + fresh.length + ') ' : '') + 'Écran Shop - Tesla';
+
+  // Alerte quand une nouvelle demande arrive pendant que la page est ouverte
+  const ids = new Set(fresh.map(l => l.id));
+  if (seenLeads && [...ids].some(id => !seenLeads.has(id))) {
+    toast('Nouvelle demande client !');
+    navigator.vibrate?.([80, 60, 80]);
+  }
+  seenLeads = ids;
+
+  if (!leads.length) {
+    $('#leads').replaceChildren(h('div', { class: 'empty' }, 'Aucune demande pour l’instant. Les clients peuvent scanner le QR code affiché sur la TV.'));
+    return;
+  }
+  $('#leads').replaceChildren(...leads.map(l => {
+    const name = [l.firstName, l.lastName].filter(Boolean).join(' ') || l.name || '-';
+    const digits = (l.phone || '').replace(/[^\d+]/g, '');
+    const wa = digits.replace(/^\+/, '').replace(/^0/, '32');
+    const summary = [name, l.phone, l.email, l.postalCode ? 'CP ' + l.postalCode : '', l.message].filter(Boolean).join('\n');
+    return h('div', { class: 'lead' + (l.status === 'done' ? ' done' : '') },
+      h('div', { class: 'top' },
+        h('div', { class: 'name' }, name),
+        h('div', { class: 'muted' }, when(l.at))),
+      h('div', { class: 'meta' }, [l.phone, l.email, l.postalCode ? 'CP ' + l.postalCode : ''].filter(Boolean).join(' · ')),
+      l.message ? h('div', { class: 'msg' }, l.message) : null,
+      l.status === 'done' ? h('div', { class: 'muted', style: 'margin-top:8px' }, '✓ Traité' + (l.doneBy ? ' par ' + l.doneBy : '') + (l.doneAt ? ' · ' + when(l.doneAt) : '')) : null,
+      h('div', { class: 'actions' },
+        digits ? h('a', { class: 'btn primary', href: 'tel:' + digits }, 'Appeler') : null,
+        digits ? h('a', { class: 'btn', href: 'https://wa.me/' + wa, target: '_blank' }, 'WhatsApp') : null,
+        l.email ? h('a', { class: 'btn', href: 'mailto:' + encodeURIComponent(l.email) + '?subject=' + encodeURIComponent('Votre demande - Tesla') }, 'E-mail') : null,
+        h('button', { onclick: () => act(() => navigator.clipboard.writeText(summary), 'Copié') }, 'Copier'),
+        l.status === 'new'
+          ? h('button', { onclick: () => act(() => api('PATCH', '/api/leads/' + l.id, { status: 'done', by: me() }), 'Marqué comme traité') }, '✓ Traité')
+          : h('button', { onclick: () => act(() => api('PATCH', '/api/leads/' + l.id, { status: 'new' })) }, 'Rouvrir'),
+        h('button', { onclick: () => confirm('Supprimer définitivement cette demande ?') && act(() => api('DELETE', '/api/leads/' + l.id), 'Supprimée') }, 'Supprimer')));
+  }));
+}
+
+let mediaKey = '';
+function renderMedia() {
+  const key = state.media.map(m => m.name).join('|');
+  if (key === mediaKey) return;
+  mediaKey = key;
+  if (!state.media.length) {
+    $('#media').replaceChildren(h('div', { class: 'empty', style: 'grid-column:1/-1' }, 'Aucun média : la TV affiche l’écran d’accueil quand il n’y a pas de message.'));
+    return;
+  }
+  $('#media').replaceChildren(...state.media.map(m => h('div', { class: 'item' },
+    m.type === 'video' ? h('video', { src: m.url + '#t=1', muted: true, playsinline: true, preload: 'metadata' }) : h('img', { src: m.url, loading: 'lazy', alt: '' }),
+    m.type === 'video' ? h('span', { class: 'vid' }, '▶ VIDÉO') : null,
+    h('button', { class: 'del', 'aria-label': 'Supprimer', onclick: () => confirm('Retirer ce média du diaporama ?') && act(() => api('DELETE', '/api/media/' + encodeURIComponent(m.name)), 'Média supprimé') }, '×'))));
+}
+
+function renderPresetEdit() {
+  const list = state.presets;
+  const save = presets => act(() => api('PUT', '/api/presets', { presets }), 'Raccourcis mis à jour');
+  const move = (i, d) => { const p = list.slice(); [p[i], p[i + d]] = [p[i + d], p[i]]; save(p); };
+  $('#presetEdit').replaceChildren(...(list.length ? list.map((p, i) =>
+    h('div', { class: 'prow' },
+      h('div', { class: 't' }, p.title, h('small', {}, (p.minutes ? p.minutes + ' min' : 'sans minuterie') + (p.sub ? ' · ' + p.sub : ''))),
+      i > 0 ? h('button', { 'aria-label': 'Monter', onclick: () => move(i, -1) }, '↑') : null,
+      h('button', { 'aria-label': 'Supprimer', onclick: () => confirm('Supprimer ce raccourci ?') && save(list.filter(x => x !== p)) }, '✕')))
+    : [h('div', { class: 'muted' }, 'Aucun raccourci.')]));
+}
+
+// --- Actions ---
+$('#cSend').addEventListener('click', () => act(async () => {
+  const title = $('#cTitle').value.trim();
+  const sub = $('#cSub').value.trim();
+  if (!title) throw new Error('Écrivez un message');
+  await api('POST', '/api/message', { title, sub, minutes: customMinutes, by: me() });
+  if ($('#cSave').checked) await api('PUT', '/api/presets', { presets: [...state.presets, { title, sub, minutes: customMinutes }] });
+  $('#cTitle').value = ''; $('#cSub').value = ''; $('#cSave').checked = false;
+  scrollTo({ top: 0, behavior: 'smooth' });
+}, 'Affiché sur la TV ✓'));
+
+$('#upload').addEventListener('change', async e => {
+  const files = [...e.target.files];
+  e.target.value = '';
+  const bar = $('#progress');
+  bar.style.display = 'block';
+  for (let i = 0; i < files.length; i++) {
+    try {
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/media');
+        xhr.setRequestHeader('X-Filename', encodeURIComponent(files[i].name));
+        xhr.upload.onprogress = ev => { if (ev.lengthComputable) bar.firstChild.style.width = ((i + ev.loaded / ev.total) / files.length * 100) + '%'; };
+        xhr.onload = () => {
+          let d = {};
+          try { d = JSON.parse(xhr.responseText); } catch (x) {}
+          if (xhr.status === 401) return location.replace('/');
+          if (xhr.status >= 400) return reject(new Error(files[i].name + ' : ' + (d.error || 'échec')));
+          apply(d); resolve();
+        };
+        xhr.onerror = () => reject(new Error('Connexion perdue'));
+        xhr.send(files[i]);
+      });
+    } catch (err) { toast(err.message, true); }
+  }
+  bar.style.display = 'none';
+  bar.firstChild.style.width = '0';
+  toast('Diaporama mis à jour');
+});
+
+$('#saveTd').addEventListener('click', () => act(() => api('PUT', '/api/settings', { testDriveUrl: $('#tdUrl').value.trim() }), 'Lien enregistré'));
+$('#saveSlide').addEventListener('click', () => act(() => api('PUT', '/api/settings', { slideSeconds: Number($('#slideSec').value) }), 'Enregistré'));
+$('#me').value = store.get('tv_me', '');
+$('#me').addEventListener('input', () => store.set('tv_me', me()));
+$('#logout').addEventListener('click', async () => { await fetch('/api/logout', { method: 'POST' }); location.replace('/'); });
+$('#share').addEventListener('click', () => act(async () => {
+  const data = { title: 'Écran shop Tesla', text: 'Accès à l’écran du shop (mot de passe à demander à l’équipe) :', url: location.origin + '/' };
+  if (navigator.share) await navigator.share(data).catch(() => {});
+  else { await navigator.clipboard.writeText(data.url); toast('Lien copié'); }
+}));
+
+function showTab(name) {
+  document.querySelectorAll('section[data-tab]').forEach(s => s.classList.toggle('active', s.dataset.tab === name));
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.go === name));
+  store.set('tv_tab', name);
+  scrollTo(0, 0);
+}
+document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.go)));
+showTab(store.get('tv_tab', 'screen'));
+
+// Synchronisation avec les collègues
+async function refresh() { try { await api('GET', '/api/state'); } catch (e) {} }
+renderMinuteChips();
+refresh();
+setInterval(refresh, 5000);
+setInterval(tick, 1000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+</script>
+</body>
+</html>

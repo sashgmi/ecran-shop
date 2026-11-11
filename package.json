@@ -1,0 +1,16 @@
+{
+  "name": "tesla-charleroi-ecran",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Écran TV du shop Tesla Rive Gauche Charleroi : messages d'absence, diaporama et formulaire client",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.js"
+  },
+  "engines": {
+    "node": ">=22.9"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.16"
+  }
+}

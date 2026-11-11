@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Écran Shop">
+<meta name="theme-color" content="#000000">
+<meta name="robots" content="noindex">
+<link rel="icon" href="brand/t.svg">
+<link rel="apple-touch-icon" href="brand/t.svg">
+<title>Écran Shop - Tesla</title>
+<style>
+  :root { --fg: #171a20; --muted: #5c5e62; --line: #e2e3e3; --bg: #f4f4f4; --card: #fff; --blue: #3e6ae1; --red: #e31937; --green: #12a150; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg: #f4f4f4; --muted: #a2a3a5; --line: #2c2f35; --bg: #000; --card: #15171c; }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--fg);
+    -webkit-font-smoothing: antialiased; padding-bottom: calc(76px + env(safe-area-inset-bottom)); line-height: 1.4; }
+  header { position: sticky; top: 0; z-index: 10; background: #000; color: #fff; padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+    display: flex; align-items: center; justify-content: space-between; }
+  header .brand { display: flex; align-items: center; gap: 10px; font-size: 13px; color: rgba(255,255,255,.7); }
+  header img { height: 14px; }
+  header .wordmark { font-weight: 600; letter-spacing: .4em; font-size: 14px; color: #fff; }
+  header a { color: #fff; font-size: 13px; text-decoration: none; border: 1px solid rgba(255,255,255,.3); border-radius: 99px; padding: 5px 12px; }
+  main { max-width: 640px; margin: 0 auto; padding: 16px; }
+  section[data-tab] { display: none; }
+  section[data-tab].active { display: block; }
+  h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 26px 4px 10px; }
+  h2:first-child { margin-top: 6px; }
+  .card { background: var(--card); border-radius: 12px; padding: 16px; }
+  .muted { color: var(--muted); font-size: 13px; }
+
+  /* Statut */
+  .status .live { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+  .status.on .dot { background: var(--red); animation: pulse 1.4s infinite; }
+  @keyframes pulse { 50% { opacity: .3; } }
+  .status .title { font-size: 20px; font-weight: 500; margin-top: 8px; }
+  .status .count { font-size: 15px; margin-top: 6px; }
+  .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .extend { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
+  .extend.minus button { background: transparent; border: 1px solid var(--line); color: var(--muted); }
+
+  button, .btn { font: inherit; font-size: 15px; font-weight: 500; border: 0; border-radius: 8px; padding: 12px 14px; cursor: pointer;
+    background: var(--bg); color: var(--fg); text-decoration: none; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  button:active, .btn:active { transform: scale(.97); }
+  .primary { background: var(--blue); color: #fff; }
+  .danger { background: var(--red); color: #fff; }
+  .grow { flex: 1; }
+  .full { width: 100%; }
+
+  /* Raccourcis */
+  .presets { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .preset { background: var(--card); border-radius: 12px; padding: 14px; text-align: left; display: block; min-height: 88px; position: relative; }
+  .preset .t { font-size: 15px; font-weight: 500; line-height: 1.25; padding-right: 4px; }
+  .preset .m { display: inline-block; margin-top: 10px; font-size: 13px; font-weight: 600; background: var(--fg); color: var(--card); border-radius: 99px; padding: 3px 10px; }
+  .preset .m.none { background: transparent; color: var(--muted); padding: 3px 0; font-weight: 400; }
+
+  label { display: block; font-size: 13px; color: var(--muted); margin: 14px 0 6px; }
+  label:first-child { margin-top: 0; }
+  input[type=text], input[type=number], textarea { width: 100%; font: inherit; font-size: 16px; color: var(--fg); background: var(--bg);
+    border: 1px solid transparent; border-radius: 8px; padding: 12px; outline: none; }
+  input:focus, textarea:focus { border-color: var(--fg); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { padding: 8px 13px; font-size: 14px; border-radius: 99px; background: var(--bg); }
+  .chip.sel { background: var(--fg); color: var(--card); }
+  .check { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--fg); margin-top: 14px; }
+  .check input { width: 18px; height: 18px; accent-color: var(--blue); }
+
+  .empty { text-align: center; color: var(--muted); padding: 32px 16px; font-size: 14px; }
+
+  /* Médias */
+  .media { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .media .item { position: relative; aspect-ratio: 16/10; border-radius: 8px; overflow: hidden; background: #000; }
+  .media img, .media video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .media .del { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; padding: 0; border-radius: 50%; background: rgba(0,0,0,.65); color: #fff; font-size: 16px; }
+  .media .vid { position: absolute; left: 6px; bottom: 4px; color: #fff; font-size: 11px; font-weight: 600; text-shadow: 0 1px 3px #000; }
+  .progress { height: 4px; background: var(--bg); border-radius: 4px; margin-top: 12px; overflow: hidden; display: none; }
+  .progress div { height: 100%; width: 0; background: var(--blue); transition: width .2s; }
+
+  /* Réglages */
+  .prow { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .prow:last-child { border-bottom: 0; }
+  .prow .t { flex: 1; min-width: 0; font-size: 14px; }
+  .prow .t small { display: block; color: var(--muted); }
+  .prow button { padding: 6px 10px; font-size: 13px; }
+
+  /* Navigation */
+  nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--card); border-top: 1px solid var(--line);
+    display: flex; padding-bottom: env(safe-area-inset-bottom); }
+  nav button { flex: 1; background: none; border-radius: 0; flex-direction: column; gap: 3px; font-size: 11px; font-weight: 500; color: var(--muted); padding: 10px 4px; position: relative; }
+  nav button.active { color: var(--fg); }
+  nav svg { width: 22px; height: 22px; }
+
+  #toast { position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(20px); z-index: 20;
+    background: var(--fg); color: var(--card); padding: 11px 18px; border-radius: 99px; font-size: 14px; font-weight: 500; opacity: 0;
+    transition: all .25s; pointer-events: none; white-space: nowrap; }
+  #toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.err { background: var(--red); color: #fff; }
+
+  /* Connexion */
+  #login { position: fixed; inset: 0; z-index: 50; background: #000; color: #fff; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+  #login[hidden] { display: none; }
+  #login form { width: 100%; max-width: 340px; text-align: center; }
+  #login h1 { font-size: 20px; font-weight: 500; }
+  #login p { color: rgba(255,255,255,.6); font-size: 14px; margin: 6px 0 28px; }
+  #login input { width: 100%; font: inherit; font-size: 16px; padding: 14px; border-radius: 6px; border: 1px solid #393c41; background: #171a20; color: #fff; outline: none; text-align: center; }
+  #login input:focus { border-color: #fff; }
+  #login button { width: 100%; margin-top: 14px; padding: 14px; }
+  #login .err { color: #ff5a6e; font-size: 14px; margin-top: 14px; min-height: 1.2em; }
+  #app[hidden] { display: none; }
+</style>
+</head>
+<body>
+<div id="login" hidden>
+  <form id="loginForm">
+    <img src="brand/t.svg" alt="" style="height:56px;margin-bottom:18px"><br>
+    <img src="brand/wordmark-white.png" alt="Tesla" style="height:16px;margin-bottom:32px">
+    <h1>Écran du shop</h1>
+    <p>Accès équipe</p>
+    <input type="password" id="pw" placeholder="Mot de passe" autocomplete="current-password" required>
+    <button class="primary">Se connecter</button>
+    <div class="err" id="loginErr" role="alert"></div>
+  </form>
+</div>
+
+<div id="app" hidden>
+<header>
+  <div class="brand">
+    <img src="brand/t.svg" alt="" style="height:20px"><img src="brand/wordmark-white.png" alt="Tesla" style="height:11px">
+    <span>Écran shop</span>
+  </div>
+  <a href="tv.html" target="_blank">Voir la TV ↗</a>
+</header>
+
+<main>
+  <!-- ÉCRAN -->
+  <section data-tab="screen" class="active">
+    <h2>Actuellement sur la TV</h2>
+    <div class="card status" id="status"></div>
+
+    <h2>Affichage rapide</h2>
+    <div class="presets" id="presets"></div>
+
+    <h2>Message personnalisé</h2>
+    <div class="card">
+      <label for="cTitle">Message</label>
+      <input type="text" id="cTitle" maxlength="140" placeholder="Ex. : Nous sommes en Test Drive">
+      <label for="cSub">Sous-titre (facultatif)</label>
+      <input type="text" id="cSub" maxlength="200" placeholder="Ex. : Installez-vous, nous revenons vite.">
+      <label>Retour dans</label>
+      <div class="chips" id="cMinutes"></div>
+      <label class="check"><input type="checkbox" id="cSave"> Enregistrer comme raccourci</label>
+      <button class="primary full" style="margin-top:16px" id="cSend">Afficher sur la TV</button>
+    </div>
+  </section>
+
+  <!-- MÉDIAS -->
+  <section data-tab="media">
+    <h2>Photos &amp; vidéos du diaporama</h2>
+    <div class="card">
+      <label class="btn primary full" for="upload" style="margin:0;color:#fff;font-size:15px">+ Ajouter des photos / vidéos</label>
+      <input type="file" id="upload" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" multiple hidden>
+      <div class="progress" id="progress"><div></div></div>
+      <p class="muted" style="margin-top:10px">Format paysage 16:9 conseillé. Vidéos en MP4 (H.264), sans son, 50 Mo max.</p>
+    </div>
+    <div class="media" id="media" style="margin-top:12px"></div>
+  </section>
+
+  <!-- RÉGLAGES -->
+  <section data-tab="settings">
+    <h2>Mon prénom</h2>
+    <div class="card">
+      <input type="text" id="me" maxlength="30" placeholder="Pour savoir qui a posté le message">
+    </div>
+
+    <h2>Diaporama</h2>
+    <div class="card">
+      <label for="slideSec">Durée d’affichage d’une photo (secondes)</label>
+      <div style="display:flex;gap:8px"><input type="number" id="slideSec" min="3" max="120" class="grow"><button id="saveSlide">OK</button></div>
+    </div>
+
+    <h2>QR code client</h2>
+    <div class="card">
+      <label for="tdUrl">Lien « Réserver un Test Drive »</label>
+      <div style="display:flex;gap:8px"><input type="text" id="tdUrl" inputmode="url" placeholder="https://www.tesla.com/…/drive" class="grow"><button id="saveTd">OK</button></div>
+      <p class="muted" style="margin-top:8px">Le QR code affiché sur la TV ouvre directement ce lien. Aucune donnée client ne passe par le site.</p>
+    </div>
+
+    <h2>Raccourcis</h2>
+    <div class="card" id="presetEdit"></div>
+    <p class="muted" style="margin:8px 4px 0">Pour ajouter un raccourci : onglet Écran → Message personnalisé → « Enregistrer comme raccourci ».</p>
+
+    <h2>Liens utiles</h2>
+    <div class="card" style="display:grid;gap:8px">
+      <a class="btn" href="tv.html" target="_blank">Ouvrir l’écran TV</a>
+      <a class="btn" id="tdOpen" href="#" target="_blank" rel="noopener">Ouvrir le lien du QR code</a>
+      <button id="share">Partager l’accès avec un collègue</button>
+      <button class="danger" id="logout">Se déconnecter</button>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button data-go="screen" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Écran</button>
+  <button data-go="media"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg>Médias</button>
+  <button data-go="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Réglages</button>
+</nav>
+
+<div id="toast"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const C = window.ECRAN_CONFIG;
+const MINUTE_CHOICES = [0, 5, 10, 15, 20, 30, 45, 60];
+const EXTEND_CHOICES = [5, 10, 15, 20, 25, 30];
+const GRACE_MS = 15 * 60 * 1000;          // message ignoré 15 min après l'heure de retour
+const MAX_FILE = 50 * 1024 * 1024;        // limite du plan gratuit Supabase
+const MEDIA_TYPES = { 'image/jpeg': 'image', 'image/png': 'image', 'image/webp': 'image', 'image/gif': 'image', 'video/mp4': 'video', 'video/webm': 'video' };
+const MEDIA_BASE = C.supabaseUrl + '/storage/v1/object/public/media/';
+const sb = supabase.createClient(C.supabaseUrl, C.supabaseKey);
+let row = null, offset = 0, customMinutes = 10;
+
+const store = {
+  get(k, d) { try { return localStorage.getItem(k) ?? d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+};
+
+// Petit constructeur DOM (pas d'innerHTML avec des textes saisis)
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (k === 'class') el.className = v;
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid);
+  return el;
+}
+
+const pad = n => String(n).padStart(2, '0');
+const hhmm = t => { const d = new Date(t); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+function when(t) {
+  const d = new Date(t), today = new Date();
+  const yest = new Date(); yest.setDate(today.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return 'aujourd’hui ' + hhmm(t);
+  if (d.toDateString() === yest.toDateString()) return 'hier ' + hhmm(t);
+  return d.toLocaleDateString('fr-BE', { day: 'numeric', month: 'short' }) + ' ' + hhmm(t);
+}
+const now = () => Date.now() + offset;
+const me = () => $('#me').value.trim();
+const rid = () => Math.random().toString(36).slice(2, 10);
+const activeMessage = r => {
+  const m = r && r.message;
+  return m && !(m.until && now() > m.until + GRACE_MS) ? m : null;
+};
+
+let toastTimer;
+function toast(text, isErr) {
+  const t = $('#toast');
+  t.textContent = text;
+  t.className = 'on' + (isErr ? ' err' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (t.className = ''), 2400);
+}
+async function act(fn, okText) {
+  try { await fn(); if (okText) { toast(okText); navigator.vibrate?.(25); } }
+  catch (e) { toast(e.message || 'Erreur', true); }
+}
+
+// --- Accès aux données Supabase ---
+async function syncClock() {
+  const t0 = Date.now();
+  const { data } = await sb.rpc('server_now');
+  if (data) offset = new Date(data).getTime() - (t0 + Date.now()) / 2;
+}
+async function fetchRow() {
+  const { data, error } = await sb.from('screen').select('*').eq('id', 1).single();
+  if (error) throw new Error('Connexion à la base impossible');
+  return data;
+}
+async function save(patch) {
+  const { data, error } = await sb.from('screen').update(patch).eq('id', 1).select().maybeSingle();
+  if (error || !data) {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { showLogin(); throw new Error('Session expirée, reconnectez-vous'); }
+    throw new Error('Enregistrement impossible');
+  }
+  apply(data);
+}
+async function refresh() { try { apply(await fetchRow()); } catch (e) {} }
+
+// --- Actions sur le message ---
+function showMessage(title, sub, minutes) {
+  const at = now();
+  return save({ message: { title, sub, at, until: minutes ? at + minutes * 60000 : null, by: me() } });
+}
+async function shiftTime(delta) {
+  const m = activeMessage(await fetchRow());
+  if (!m) throw new Error('Aucun message affiché');
+  if (delta < 0) {
+    if (!m.until) throw new Error('Ce message n’a pas de minuterie');
+    m.until = Math.max(now(), m.until + delta * 60000); // jamais avant "maintenant" : la TV affiche « Retour imminent »
+  } else {
+    m.until = Math.max(m.until || 0, now()) + delta * 60000;
+  }
+  await save({ message: m });
+}
+
+// --- Rendu ---
+function apply(r) {
+  row = r;
+  renderStatus();
+  renderPresets();
+  renderMedia();
+  renderPresetEdit();
+  if (document.activeElement !== $('#slideSec')) $('#slideSec').value = r.slide_seconds;
+  if (document.activeElement !== $('#tdUrl')) $('#tdUrl').value = r.test_drive_url || '';
+  $('#tdOpen').href = r.test_drive_url || '#';
+}
+
+function renderStatus() {
+  const m = activeMessage(row), el = $('#status');
+  el.className = 'card status' + (m ? ' on' : '');
+  el.replaceChildren();
+  if (!m) {
+    el.append(
+      h('div', { class: 'live' }, h('span', { class: 'dot' }), 'Diaporama'),
+      h('div', { class: 'title' }, 'Aucun message affiché'),
+      h('div', { class: 'muted', style: 'margin-top:4px' }, row.media.length
+        ? row.media.length + ' photo(s)/vidéo(s) en rotation'
+        : 'Écran d’accueil (ajoutez des photos dans Médias)'));
+    return;
+  }
+  el.append(...[
+    h('div', { class: 'live' }, h('span', { class: 'dot' }), 'Message en direct'),
+    h('div', { class: 'title' }, m.title),
+    m.sub ? h('div', { class: 'muted', style: 'margin-top:2px' }, m.sub) : null,
+    m.until ? h('div', { class: 'count', id: 'countdown' }) : null,
+    h('div', { class: 'muted', style: 'margin-top:6px' }, 'Publié ' + when(m.at) + (m.by ? ' par ' + m.by : '')),
+    h('div', { class: 'actions' },
+      h('div', { class: 'extend' }, EXTEND_CHOICES.map(n =>
+        h('button', { onclick: () => act(() => shiftTime(n), '+' + n + ' min') }, '+' + n + ' min'))),
+      m.until ? h('div', { class: 'extend minus' }, EXTEND_CHOICES.map(n =>
+        h('button', { onclick: () => act(() => shiftTime(-n), '-' + n + ' min') }, '-' + n + ' min'))) : null,
+      h('button', { class: 'danger full', onclick: () => act(() => save({ message: null }), 'Message retiré') }, 'Retirer le message (on est de retour)'))].filter(Boolean));
+  tick();
+}
+
+function tick() {
+  const el = $('#countdown');
+  const m = activeMessage(row);
+  if (!m && row && row.message && $('#status').classList.contains('on')) return renderStatus(); // message expiré
+  if (!el || !m?.until) return;
+  const left = m.until - now();
+  el.textContent = left > 0
+    ? 'Retour dans ' + Math.ceil(left / 60000) + ' min · vers ' + hhmm(m.until)
+    : 'Heure de retour dépassée - la TV affiche « Retour imminent »';
+}
+
+function renderPresets() {
+  $('#presets').replaceChildren(...row.presets.map(p =>
+    h('button', { class: 'preset', onclick: () => act(() => showMessage(p.title, p.sub, p.minutes), 'Affiché sur la TV ✓') },
+      h('div', { class: 't' }, p.title),
+      h('span', { class: 'm' + (p.minutes ? '' : ' none') }, p.minutes ? p.minutes + ' min' : 'sans minuterie'))));
+}
+
+function renderMinuteChips() {
+  $('#cMinutes').replaceChildren(...MINUTE_CHOICES.map(n =>
+    h('button', { class: 'chip' + (n === customMinutes ? ' sel' : ''), onclick: () => { customMinutes = n; renderMinuteChips(); } }, n ? n + ' min' : 'Aucune')));
+}
+
+let mediaKey = null;
+function renderMedia() {
+  const key = row.media.map(m => m.path).join('|');
+  if (key === mediaKey) return;
+  mediaKey = key;
+  if (!row.media.length) {
+    $('#media').replaceChildren(h('div', { class: 'empty', style: 'grid-column:1/-1' }, 'Aucun média : la TV affiche l’écran d’accueil quand il n’y a pas de message.'));
+    return;
+  }
+  $('#media').replaceChildren(...row.media.map(m => {
+    const url = MEDIA_BASE + encodeURIComponent(m.path);
+    return h('div', { class: 'item' },
+      m.type === 'video' ? h('video', { src: url + '#t=1', muted: true, playsinline: true, preload: 'metadata' }) : h('img', { src: url, loading: 'lazy', alt: '' }),
+      m.type === 'video' ? h('span', { class: 'vid' }, '▶ VIDÉO') : null,
+      h('button', { class: 'del', 'aria-label': 'Supprimer', onclick: () => confirm('Retirer ce média du diaporama ?') && act(() => deleteMedia(m.path), 'Média supprimé') }, '×'));
+  }));
+}
+
+function renderPresetEdit() {
+  const list = row.presets;
+  const savePresets = presets => act(() => save({ presets }), 'Raccourcis mis à jour');
+  const move = (i, d) => { const p = list.slice(); [p[i], p[i + d]] = [p[i + d], p[i]]; savePresets(p); };
+  $('#presetEdit').replaceChildren(...(list.length ? list.map((p, i) =>
+    h('div', { class: 'prow' },
+      h('div', { class: 't' }, p.title, h('small', {}, (p.minutes ? p.minutes + ' min' : 'sans minuterie') + (p.sub ? ' · ' + p.sub : ''))),
+      i > 0 ? h('button', { 'aria-label': 'Monter', onclick: () => move(i, -1) }, '↑') : null,
+      h('button', { 'aria-label': 'Supprimer', onclick: () => confirm('Supprimer ce raccourci ?') && savePresets(list.filter(x => x !== p)) }, '✕')))
+    : [h('div', { class: 'muted' }, 'Aucun raccourci.')]));
+}
+
+// --- Médias ---
+async function uploadMedia(file) {
+  const type = MEDIA_TYPES[file.type];
+  if (!type) throw new Error(file.name + ' : format non supporté (jpg, png, webp, gif, mp4, webm)');
+  if (file.size > MAX_FILE) throw new Error(file.name + ' : trop lourd (50 Mo max)');
+  const dot = file.name.lastIndexOf('.');
+  const base = (dot > 0 ? file.name.slice(0, dot) : file.name).normalize('NFD').replace(/[^\w-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'media';
+  const ext = dot > 0 ? file.name.slice(dot).toLowerCase() : '';
+  const path = Date.now() + '-' + base + ext;
+  const { error } = await sb.storage.from('media').upload(path, file, { contentType: file.type, cacheControl: '31536000' });
+  if (error) throw new Error(file.name + ' : envoi impossible');
+  const fresh = await fetchRow();
+  await save({ media: [...fresh.media, { path, type }] });
+}
+async function deleteMedia(path) {
+  const fresh = await fetchRow();
+  await save({ media: fresh.media.filter(m => m.path !== path) });
+  await sb.storage.from('media').remove([path]);
+}
+
+$('#upload').addEventListener('change', async e => {
+  const files = [...e.target.files];
+  e.target.value = '';
+  const bar = $('#progress');
+  bar.style.display = 'block';
+  let ok = 0;
+  for (let i = 0; i < files.length; i++) {
+    bar.firstChild.style.width = ((i + 0.5) / files.length * 100) + '%';
+    try { await uploadMedia(files[i]); ok++; } catch (err) { toast(err.message, true); await new Promise(r => setTimeout(r, 1500)); }
+  }
+  bar.style.display = 'none';
+  bar.firstChild.style.width = '0';
+  if (ok) toast(ok + ' média(s) ajouté(s)');
+});
+
+// --- Formulaires ---
+$('#cSend').addEventListener('click', () => act(async () => {
+  const title = $('#cTitle').value.trim().slice(0, 140);
+  const sub = $('#cSub').value.trim().slice(0, 200);
+  if (!title) throw new Error('Écrivez un message');
+  await showMessage(title, sub, customMinutes);
+  if ($('#cSave').checked) {
+    const fresh = await fetchRow();
+    await save({ presets: [...fresh.presets, { id: rid(), title, sub, minutes: customMinutes }] });
+  }
+  $('#cTitle').value = ''; $('#cSub').value = ''; $('#cSave').checked = false;
+  scrollTo({ top: 0, behavior: 'smooth' });
+}, 'Affiché sur la TV ✓'));
+
+$('#saveTd').addEventListener('click', () => act(async () => {
+  const url = $('#tdUrl').value.trim();
+  if (!/^https:\/\/\S+$/.test(url)) throw new Error('Le lien doit commencer par https://');
+  await save({ test_drive_url: url });
+}, 'Lien enregistré'));
+$('#saveSlide').addEventListener('click', () => act(() =>
+  save({ slide_seconds: Math.max(3, Math.min(120, Math.round(Number($('#slideSec').value) || 8))) }), 'Enregistré'));
+$('#me').value = store.get('tv_me', '');
+$('#me').addEventListener('input', () => store.set('tv_me', me()));
+$('#logout').addEventListener('click', () => sb.auth.signOut());
+$('#share').addEventListener('click', () => act(async () => {
+  const data = { title: 'Écran shop Tesla', text: 'Accès à l’écran du shop (mot de passe à demander à l’équipe) :', url: location.origin + location.pathname };
+  if (navigator.share) await navigator.share(data).catch(() => {});
+  else { await navigator.clipboard.writeText(data.url); toast('Lien copié'); }
+}));
+
+function showTab(name) {
+  document.querySelectorAll('section[data-tab]').forEach(s => s.classList.toggle('active', s.dataset.tab === name));
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.go === name));
+  store.set('tv_tab', name);
+  scrollTo(0, 0);
+}
+document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.go)));
+showTab(store.get('tv_tab', 'screen'));
+if (!document.querySelector('section[data-tab].active')) showTab('screen');
+
+// --- Connexion ---
+function showLogin() {
+  $('#app').hidden = true;
+  $('#login').hidden = false;
+  $('#pw').value = '';
+  setTimeout(() => $('#pw').focus(), 50);
+}
+let started = false;
+async function showApp() {
+  $('#login').hidden = true;
+  $('#app').hidden = false;
+  if (started) return refresh();
+  started = true;
+  renderMinuteChips();
+  await syncClock().catch(() => {});
+  await refresh();
+  // Mise à jour instantanée quand un collègue change quelque chose
+  sb.channel('screen').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'screen' }, p => apply(p.new)).subscribe();
+  setInterval(refresh, 15000);
+  setInterval(tick, 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+}
+$('#loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('#loginErr').textContent = '';
+  const { error } = await sb.auth.signInWithPassword({ email: C.teamEmail, password: $('#pw').value });
+  if (error) { $('#loginErr').textContent = /invalid/i.test(error.message) ? 'Mot de passe incorrect' : 'Connexion impossible, réessayez'; return; }
+  showApp();
+});
+sb.auth.onAuthStateChange((event) => { if (event === 'SIGNED_OUT') showLogin(); });
+
+(async () => {
+  if (C.supabaseUrl.includes('VOTRE-PROJET')) {
+    $('#loginErr').textContent = 'Configuration Supabase manquante (config.js)';
+    return showLogin();
+  }
+  const { data: { session } } = await sb.auth.getSession();
+  session ? showApp() : showLogin();
+})();
+</script>
+</body>
+</html>

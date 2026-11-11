@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Écran Shop">
+<link rel="icon" href="/brand/t.svg">
+<title>Connexion - Écran Shop</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; background: #000; color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  form { width: 100%; max-width: 340px; text-align: center; }
+  .wordmark { display: block; font-weight: 600; letter-spacing: .45em; margin: 0 -.45em 28px 0; font-size: 18px; }
+  h1 { font-size: 20px; font-weight: 500; }
+  p { color: rgba(255,255,255,.6); font-size: 14px; margin: 6px 0 28px; }
+  input { width: 100%; font: inherit; font-size: 16px; padding: 14px; border-radius: 6px; border: 1px solid #393c41; background: #171a20; color: #fff; outline: none; text-align: center; }
+  input:focus { border-color: #fff; }
+  button { width: 100%; margin-top: 14px; font: inherit; font-size: 15px; font-weight: 500; padding: 14px; border: 0; border-radius: 6px; background: #3e6ae1; color: #fff; }
+  .err { color: #ff5a6e; font-size: 14px; margin-top: 14px; min-height: 1.2em; }
+</style>
+</head>
+<body>
+<form id="f">
+  <img src="/brand/t.svg" alt="" style="height:56px;margin-bottom:18px"><br>
+  <img src="/brand/wordmark-white.png" alt="Tesla" style="height:16px;margin-bottom:32px">
+  <h1>Écran du shop</h1>
+  <p>Accès équipe</p>
+  <input type="password" id="pw" placeholder="Mot de passe" autocomplete="current-password" autofocus required>
+  <button>Se connecter</button>
+  <div class="err" id="err" role="alert"></div>
+</form>
+<script>
+  document.getElementById('f').addEventListener('submit', async e => {
+    e.preventDefault();
+    const err = document.getElementById('err');
+    err.textContent = '';
+    try {
+      const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: document.getElementById('pw').value }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || 'Connexion impossible');
+      location.replace('/');
+    } catch (ex) { err.textContent = ex.message; }
+  });
+</script>
+</body>
+</html>

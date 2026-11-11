@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" href="/brand/t.svg">
+<title>Vous devez partir ? - Tesla</title>
+<style>
+  :root { --fg: #171a20; --muted: #5c5e62; --line: #d0d1d2; --bg: #fff; --field: #f4f4f4; --blue: #3e6ae1; --red: #e31937; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; color: var(--fg); background: var(--bg);
+    -webkit-font-smoothing: antialiased; line-height: 1.45; }
+  header { display: flex; align-items: center; justify-content: center; padding: 22px 16px 8px; }
+  header img { height: 18px; }
+  header .wordmark { font-weight: 600; letter-spacing: .45em; font-size: 17px; margin-right: -.45em; }
+  main { max-width: 520px; margin: 0 auto; padding: 16px 20px 48px; }
+  h1 { font-size: 26px; font-weight: 500; text-align: center; margin-top: 12px; }
+  .lead { text-align: center; color: var(--muted); margin: 8px 0 28px; font-size: 15px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 18px 0 6px; }
+  input[type=text], input[type=tel], input[type=email], textarea, select {
+    width: 100%; font: inherit; font-size: 16px; color: var(--fg); background: var(--field); border: 1px solid transparent;
+    border-radius: 6px; padding: 12px 14px; outline: none; -webkit-appearance: none; appearance: none; }
+  input:focus, textarea:focus, select:focus { border-color: var(--fg); background: #fff; }
+  textarea { min-height: 110px; resize: vertical; }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; min-width: 0; }
+  .consent { display: flex; gap: 10px; align-items: flex-start; margin-top: 22px; font-size: 13px; color: var(--muted); }
+  .consent input { width: 20px; height: 20px; margin-top: 1px; flex-shrink: 0; accent-color: var(--fg); }
+  .consent label { margin: 0; font-size: 13px; }
+  button { width: 100%; margin-top: 26px; font: inherit; font-size: 15px; font-weight: 500; color: #fff; background: var(--blue);
+    border: 0; border-radius: 6px; padding: 14px; cursor: pointer; }
+  button:disabled { opacity: .6; }
+  .err { color: var(--red); font-size: 14px; margin-top: 14px; min-height: 1em; text-align: center; }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .note { font-size: 12px; color: var(--muted); text-align: center; margin-top: 18px; }
+  .note a { color: inherit; display: inline-block; margin-top: 6px; }
+  .choices { display: grid; gap: 12px; }
+  .choice { display: block; width: 100%; margin: 0; text-align: left; text-decoration: none; color: var(--fg); background: var(--field);
+    border-radius: 10px; padding: 18px 18px; font-size: 17px; font-weight: 500; cursor: pointer; }
+  .choice small { display: block; font-size: 14px; font-weight: 400; color: var(--muted); margin-top: 2px; }
+  .choice.primary { background: var(--blue); color: #fff; }
+  .choice.primary small { color: rgba(255,255,255,.8); }
+  .choice::after { content: "›"; float: right; font-size: 24px; line-height: 1; margin-top: -26px; opacity: .6; }
+  #form { display: none; margin-top: 8px; }
+  #form h2 { font-size: 20px; font-weight: 500; margin-top: 28px; }
+  #done { display: none; text-align: center; padding-top: 40px; }
+  #done .check { width: 64px; height: 64px; border-radius: 50%; background: var(--fg); color: #fff; font-size: 32px; line-height: 64px; margin: 0 auto 20px; }
+  #done p { color: var(--muted); margin-top: 10px; }
+</style>
+</head>
+<body>
+<header>
+  <img src="/brand/t.svg" alt="" style="height:30px;margin-right:12px"><img src="/brand/wordmark-black.png" alt="Tesla" style="height:15px">
+</header>
+<main>
+  <div id="intro">
+    <h1>Vous devez partir ?</h1>
+    <p class="lead">Nous sommes momentanément absents. Réservez un Test Drive ou écrivez-nous, un conseiller Tesla vous recontacte rapidement.</p>
+    <div class="choices">
+      <a class="choice primary" id="drive" href="#" target="_blank" rel="noopener" hidden>Réserver un Test Drive<small>Choisissez votre modèle et votre créneau</small></a>
+      <button type="button" class="choice" id="write">Nous écrire<small>Laissez vos coordonnées et votre demande</small></button>
+    </div>
+  </div>
+
+  <form id="form" novalidate>
+    <h2>Nous écrire</h2>
+
+    <div class="row">
+      <div>
+        <label for="firstName">Prénom *</label>
+        <input type="text" id="firstName" name="firstName" autocomplete="given-name" required maxlength="60">
+      </div>
+      <div>
+        <label for="lastName">Nom *</label>
+        <input type="text" id="lastName" name="lastName" autocomplete="family-name" required maxlength="60">
+      </div>
+    </div>
+
+    <label for="email">Adresse e-mail *</label>
+    <input type="email" id="email" name="email" autocomplete="email" inputmode="email" required maxlength="120">
+
+    <div class="row">
+      <div style="flex:1.6">
+        <label for="phone">Téléphone *</label>
+        <input type="tel" id="phone" name="phone" autocomplete="tel" required maxlength="40" placeholder="+32 …">
+      </div>
+      <div>
+        <label for="postalCode">Code postal *</label>
+        <input type="text" id="postalCode" name="postalCode" autocomplete="postal-code" inputmode="numeric" required maxlength="10" placeholder="6000">
+      </div>
+    </div>
+
+    <label for="message">Votre demande *</label>
+    <textarea id="message" name="message" required maxlength="1500" placeholder="Test Drive, commande, livraison, question… dites-nous tout."></textarea>
+
+    <div class="hp" aria-hidden="true"><label for="website">Site web</label><input type="text" id="website" name="website" tabindex="-1" autocomplete="off"></div>
+
+    <div class="consent">
+      <input type="checkbox" id="consent" name="consent">
+      <label for="consent">J’accepte que Tesla utilise ces informations pour me recontacter au sujet de ma demande et les enregistre dans ses systèmes. *</label>
+    </div>
+
+    <button type="submit" id="submit">Envoyer</button>
+    <div class="err" id="err" role="alert"></div>
+    <p class="note">Votre message est envoyé par e-mail à un conseiller Tesla, qui l’enregistre dans les systèmes de Tesla pour traiter votre demande. Il n’est pas conservé sur ce site.<br><a href="https://www.tesla.com/fr_be/legal/privacy" target="_blank" rel="noopener">Politique de confidentialité de Tesla</a></p>
+  </form>
+
+  <div id="done">
+    <div class="check">✓</div>
+    <h1>Merci !</h1>
+    <p>Votre message a bien été transmis. Un conseiller vous recontacte dès que possible.</p>
+  </div>
+</main>
+<script>
+  const form = document.getElementById('form');
+  function openForm() {
+    form.style.display = 'block';
+    document.getElementById('write').hidden = true;
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  document.getElementById('write').addEventListener('click', openForm);
+  fetch('/api/state').then(r => r.json()).then(s => {
+    if (s.testDriveUrl) {
+      const a = document.getElementById('drive');
+      a.href = s.testDriveUrl;
+      a.hidden = false;
+    }
+  }).catch(() => {});
+  const err = document.getElementById('err');
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    err.textContent = '';
+    const f = new FormData(form);
+    const data = Object.fromEntries(f.entries());
+    data.consent = form.consent.checked;
+    const missing = [['firstName', 'votre prénom'], ['lastName', 'votre nom'], ['email', 'votre e-mail'], ['phone', 'votre téléphone'], ['postalCode', 'votre code postal'], ['message', 'votre demande']]
+      .find(([k]) => !String(data[k] || '').trim());
+    if (missing) { form[missing[0]].focus(); return (err.textContent = 'Merci d’indiquer ' + missing[1] + '.'); }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) { form.email.focus(); return (err.textContent = 'Adresse e-mail invalide.'); }
+    if (!data.consent) return (err.textContent = 'Merci de cocher la case d’accord.');
+    const btn = document.getElementById('submit');
+    btn.disabled = true;
+    btn.textContent = 'Envoi…';
+    try {
+      const r = await fetch('/api/leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || 'Envoi impossible, réessayez.');
+      form.style.display = 'none';
+      document.getElementById('intro').style.display = 'none';
+      document.getElementById('done').style.display = 'block';
+      window.scrollTo(0, 0);
+    } catch (ex) {
+      err.textContent = ex.message;
+      btn.disabled = false;
+      btn.textContent = 'Envoyer';
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="brand/t.svg">
+<title>Tesla - Écran</title>
+<style>
+  :root { --red: #e31937; --muted: rgba(255,255,255,.62); }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #000; color: #fff; overflow: hidden; cursor: none;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  .full { position: fixed; top: 0; left: 0; right: 0; bottom: 0; }
+
+  /* Diaporama */
+  .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.2s ease; }
+  .slide.on { opacity: 1; }
+  img.slide.on { animation: kenburns 24s linear forwards; }
+  @keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.08); } }
+
+  /* Écran d'accueil sans média */
+  #idle { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+    background: radial-gradient(ellipse at 50% 120%, #1c1f26 0%, #000 65%); }
+  #idle .t-big { height: 20vh; margin-bottom: 5vh; }
+  #idle .word-big { height: 3.6vh; margin-bottom: 8vh; }
+  #idle h1 { font-size: 6vh; font-weight: 300; }
+  #idle p { font-size: 3vh; color: var(--muted); margin-top: 2vh; letter-spacing: .08em; }
+  .hidden { display: none !important; }
+
+  /* Barre de marque */
+  #brandbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; justify-content: space-between; align-items: flex-end;
+    padding: 6vh 4vw 3.5vh; background: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,.65)); }
+  #brandbar .brand { display: flex; align-items: center; }
+  #brandbar .t { height: 4.4vh; margin-right: 1.4vw; }
+  #brandbar .word { height: 2vh; }
+  #clock { font-size: 3.4vh; font-weight: 300; font-variant-numeric: tabular-nums; }
+
+  /* Petit QR pendant le diaporama */
+  #qrCorner { position: fixed; top: 4vh; right: 3vw; z-index: 4; background: rgba(0,0,0,.55); border-radius: 1.2vh; padding: 1.4vh;
+    display: flex; align-items: center; transition: opacity .6s; }
+  #qrCorner .qr { background: #fff; padding: .8vh; border-radius: .6vh; width: 13vh; height: 13vh; }
+  #qrCorner .txt { font-size: 1.9vh; line-height: 1.35; margin-left: 1.4vh; max-width: 22vh; }
+  #qrCorner .txt b { display: block; font-size: 2.1vh; margin-bottom: .4vh; }
+  body.has-msg #qrCorner { opacity: 0; }
+  .qr img, .qr canvas { width: 100% !important; height: 100% !important; display: block; }
+
+  /* Message */
+  #msg { z-index: 3; background: #000; display: flex; align-items: center; justify-content: space-between; padding: 0 7vw 8vh;
+    opacity: 0; transition: opacity .6s ease; }
+  #msg.on { opacity: 1; }
+  #msg .main { flex: 1; min-width: 0; padding-right: 5vw; }
+  #msg .accent { width: 7vw; height: .7vh; background: var(--red); margin-bottom: 5vh; }
+  #mTitle { font-size: 8vh; font-weight: 500; line-height: 1.12; letter-spacing: -.01em; }
+  #mSub { font-size: 3.6vh; color: var(--muted); margin-top: 3vh; line-height: 1.35; font-weight: 300; }
+  #mCount { margin-top: 7vh; }
+  #mLabel { font-size: 2.6vh; text-transform: uppercase; letter-spacing: .3em; color: var(--muted); }
+  #mBig { margin-top: 1vh; line-height: 1; }
+  #mNum { font-size: 20vh; font-weight: 200; font-variant-numeric: tabular-nums; }
+  #mUnit { font-size: 6vh; font-weight: 300; margin-left: 1.5vw; color: var(--muted); }
+  #mAt { font-size: 3.2vh; margin-top: 2vh; font-weight: 300; }
+  #mBar { margin-top: 4vh; height: .5vh; width: 45vw; background: rgba(255,255,255,.15); }
+  #mBar div { height: 100%; width: 100%; background: var(--red); transition: width 1s linear; }
+  #msg .side { width: 30vh; text-align: center; flex-shrink: 0; }
+  #msg .side .qr { background: #fff; padding: 2vh; border-radius: 1.6vh; width: 30vh; height: 30vh; }
+  #msg .side h3 { font-size: 2.8vh; font-weight: 500; margin-top: 3vh; }
+  #msg .side p { font-size: 2.2vh; color: var(--muted); margin-top: 1vh; line-height: 1.35; }
+
+  #fsHint { position: fixed; top: 3vh; left: 50%; transform: translateX(-50%); z-index: 9; background: rgba(255,255,255,.12);
+    padding: 1.4vh 2.4vw; border-radius: 99px; font-size: 2.2vh; transition: opacity .8s; }
+  #offline { position: fixed; top: 2vh; left: 2vh; z-index: 9; width: 1.4vh; height: 1.4vh; border-radius: 50%; background: #f5a623; display: none; }
+  #offline.on { display: block; }
+</style>
+</head>
+<body>
+  <div id="stage" class="full"></div>
+
+  <div id="idle" class="full hidden">
+    <img class="t-big" src="brand/t.svg" alt="">
+    <img class="word-big" src="brand/wordmark-white.png" alt="Tesla">
+    <h1>Bienvenue</h1>
+  </div>
+
+  <div id="qrCorner" class="hidden">
+    <div class="qr" id="qrSmall"></div>
+    <div class="txt"><b>Envie d’essayer ?</b>Scannez pour réserver votre Test Drive</div>
+  </div>
+
+  <div id="msg" class="full">
+    <div class="main">
+      <div class="accent"></div>
+      <div id="mTitle"></div>
+      <div id="mSub"></div>
+      <div id="mCount">
+        <div id="mLabel"></div>
+        <div id="mBig"><span id="mNum"></span><span id="mUnit"></span></div>
+        <div id="mAt"></div>
+        <div id="mBar"><div></div></div>
+      </div>
+    </div>
+    <div class="side hidden" id="qrSide">
+      <div class="qr" id="qrBig"></div>
+      <h3>Vous devez partir ?</h3>
+      <p>Scannez ce code pour réserver votre Test Drive en ligne.</p>
+    </div>
+  </div>
+
+  <div id="brandbar">
+    <div class="brand">
+      <img class="t" src="brand/t.svg" alt="">
+      <img class="word" src="brand/wordmark-white.png" alt="Tesla">
+    </div>
+    <div id="clock"></div>
+  </div>
+
+  <div id="fsHint">Appuyez sur OK / Entrée pour le plein écran</div>
+  <div id="offline"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="config.js"></script>
+<script>
+// Écrit en ES5/ES2015 léger pour rester compatible avec les navigateurs Samsung (Tizen) plus anciens.
+(function () {
+  var POLL_MS = 4000;
+  var GRACE_MS = 15 * 60 * 1000; // message ignoré 15 min après l'heure de retour
+  var C = window.ECRAN_CONFIG;
+  var MEDIA_BASE = C.supabaseUrl + '/storage/v1/object/public/media/';
+  var offset = 0, state = null, media = [], mediaKey = null, idx = -1, slideTimer = null, current = null, msgKey = '';
+
+  function $(id) { return document.getElementById(id); }
+  function now() { return Date.now() + offset; }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function hhmm(t) { var d = new Date(t); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function toggle(el, show) { if (show) el.classList.remove('hidden'); else el.classList.add('hidden'); }
+
+  // --- QR code vers le formulaire client ---
+  // --- QR code vers la page Test Drive (lien réglé dans la gestion) ---
+  var qrUrl = null;
+  function renderQr(url) {
+    if (url === qrUrl || !window.QRCode) return;
+    qrUrl = url;
+    [['qrSmall', 256], ['qrBig', 512]].forEach(function (q) {
+      var el = $(q[0]);
+      el.innerHTML = '';
+      if (url) new QRCode(el, { text: url, width: q[1], height: q[1], correctLevel: QRCode.CorrectLevel.M });
+    });
+    toggle($('qrCorner'), !!url);
+    toggle($('qrSide'), !!url);
+  }
+
+  // --- Synchronisation avec le serveur ---
+  function rest(path, body) {
+    return fetch(C.supabaseUrl + '/rest/v1/' + path, {
+      method: body ? 'POST' : 'GET',
+      headers: { apikey: C.supabaseKey, 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined,
+      cache: 'no-store'
+    }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+  }
+
+  // Heure du serveur : la TV affiche le même compte à rebours que les téléphones, même si son horloge dérive
+  function syncClock() {
+    var t0 = Date.now();
+    rest('rpc/server_now', {}).then(function (iso) {
+      offset = new Date(iso).getTime() - (t0 + Date.now()) / 2;
+    }).catch(function () {});
+  }
+
+  function poll() {
+    rest('screen?id=eq.1&select=message,media,slide_seconds,test_drive_url')
+      .then(function (rows) {
+        var row = rows[0];
+        if (!row) throw new Error('vide');
+        var m = row.message;
+        if (m && m.until && now() > m.until + GRACE_MS) m = null;
+        state = {
+          message: m,
+          slideSeconds: row.slide_seconds,
+          media: (row.media || []).map(function (x) {
+            return { name: x.path, type: x.type, url: MEDIA_BASE + encodeURIComponent(x.path) };
+          })
+        };
+        renderQr(row.test_drive_url || '');
+        renderMessage();
+        updateMedia(state.media);
+        $('offline').className = '';
+      })
+      .catch(function () { $('offline').className = 'on'; })
+      .then(function () { setTimeout(poll, POLL_MS); });
+  }
+
+  // --- Message ---
+  function renderMessage() {
+    var m = state && state.message;
+    $('msg').className = 'full' + (m ? ' on' : '');
+    document.body.className = m ? 'has-msg' : '';
+    if (m) {
+      var k = m.at + '|' + m.title + '|' + m.sub;
+      if (k !== msgKey) {
+        msgKey = k;
+        $('mTitle').textContent = m.title;
+        $('mSub').textContent = m.sub || '';
+        toggle($('mSub'), !!m.sub);
+      }
+    }
+    tick();
+  }
+
+  function tick() {
+    $('clock').textContent = hhmm(now());
+    var m = state && state.message;
+    if (!m) return;
+    toggle($('mCount'), !!m.until);
+    if (!m.until) return;
+    var left = m.until - now();
+    if (left > 0) {
+      var min = Math.ceil(left / 60000);
+      $('mLabel').textContent = 'De retour dans';
+      $('mNum').textContent = min;
+      $('mUnit').textContent = 'min';
+      $('mAt').textContent = 'Retour prévu vers ' + hhmm(m.until);
+      $('mBar').firstChild.style.width = Math.max(0, Math.min(100, left / (m.until - m.at) * 100)) + '%';
+    } else {
+      $('mLabel').textContent = 'Retour imminent';
+      $('mNum').textContent = '';
+      $('mUnit').textContent = '';
+      $('mAt').textContent = 'Nous arrivons d’un instant à l’autre. Merci de votre patience.';
+      $('mBar').firstChild.style.width = '0%';
+    }
+  }
+
+  // --- Diaporama ---
+  function updateMedia(list) {
+    var key = list.map(function (m) { return m.name; }).join('|');
+    if (key === mediaKey) return;
+    mediaKey = key;
+    media = list;
+    toggle($('idle'), !media.length);
+    if (!media.length) {
+      clearTimeout(slideTimer);
+      if (current) { dispose(current); current = null; }
+      return;
+    }
+    var pos = -1;
+    if (current) media.forEach(function (m, i) { if (m.url === current.getAttribute('data-url')) pos = i; });
+    if (pos === -1) { idx = -1; next(); }
+    else {
+      idx = pos;
+      // un seul média restant : on garde l'image fixe / la vidéo en boucle
+      if (media.length === 1) { clearTimeout(slideTimer); if (current.tagName === 'VIDEO') current.loop = true; }
+      else if (current.tagName === 'VIDEO') current.loop = false;
+      else if (!slideTimer) slideTimer = setTimeout(next, state.slideSeconds * 1000);
+    }
+  }
+
+  function dispose(el) {
+    if (el.tagName === 'VIDEO') { el.pause(); el.removeAttribute('src'); el.load(); }
+    if (el.parentNode) el.parentNode.removeChild(el);
+  }
+
+  function next() {
+    clearTimeout(slideTimer);
+    slideTimer = null;
+    if (!media.length) return;
+    idx = (idx + 1) % media.length;
+    var m = media[idx];
+    var isVideo = m.type === 'video';
+    var el = document.createElement(isVideo ? 'video' : 'img');
+    var done = false;
+    el.className = 'slide';
+    el.setAttribute('data-url', m.url);
+    if (isVideo) {
+      el.muted = true;
+      el.setAttribute('muted', '');
+      el.setAttribute('playsinline', '');
+      el.preload = 'auto';
+      el.loop = media.length === 1;
+      el.addEventListener('ended', next);
+    }
+    function ready() {
+      if (done) return;
+      done = true;
+      el.className = 'slide on';
+      var old = current;
+      current = el;
+      if (old) setTimeout(function () { dispose(old); }, 1400);
+      if (isVideo) {
+        var p = el.play();
+        if (p && p.catch) p.catch(function () {});
+        slideTimer = setTimeout(next, 15 * 60 * 1000); // sécurité si "ended" ne vient jamais
+      } else if (media.length > 1) {
+        slideTimer = setTimeout(next, state.slideSeconds * 1000);
+      }
+    }
+    el.addEventListener(isVideo ? 'canplay' : 'load', ready);
+    el.addEventListener('error', function () {
+      if (done) return;
+      done = true;
+      dispose(el);
+      slideTimer = setTimeout(next, 1500);
+    });
+    el.src = m.url;
+    $('stage').appendChild(el);
+  }
+
+  // --- Plein écran & veille ---
+  function goFullscreen() {
+    var d = document.documentElement;
+    var fn = d.requestFullscreen || d.webkitRequestFullscreen;
+    if (fn) { try { var p = fn.call(d); if (p && p.catch) p.catch(function () {}); } catch (e) {} }
+    $('fsHint').style.opacity = 0;
+  }
+  document.addEventListener('click', goFullscreen);
+  document.addEventListener('keydown', function (e) { if (e.keyCode === 13) goFullscreen(); });
+  setTimeout(function () { $('fsHint').style.opacity = 0; }, 10000);
+
+  function keepAwake() {
+    if (navigator.wakeLock && navigator.wakeLock.request) navigator.wakeLock.request('screen').catch(function () {});
+  }
+  keepAwake();
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) keepAwake(); });
+
+  // Rechargement complet toutes les 6 h (mises à jour, mémoire du navigateur TV)
+  setTimeout(function () { location.reload(); }, 6 * 3600 * 1000);
+
+  setInterval(tick, 1000);
+  setInterval(syncClock, 10 * 60 * 1000);
+  syncClock();
+  tick();
+  poll();
+})();
+</script>
+</body>
+</html>
