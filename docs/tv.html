@@ -44,15 +44,20 @@
   #qrCorner .qr { background: #fff; padding: .8vh; border-radius: .6vh; width: 13vh; height: 13vh; }
   #qrCorner .txt { font-size: 1.9vh; line-height: 1.35; margin-left: 1.6vh; margin-right: .6vh; white-space: nowrap; }
   #qrCorner .txt b { display: block; font-size: 2.1vh; margin-bottom: .4vh; }
-  body.has-msg #qrCorner { opacity: 0; }
   body.is-idle:not(.has-msg) #brandbar .brand { visibility: hidden; }
   .qr img, .qr canvas { width: 100% !important; height: 100% !important; display: block; }
 
   /* Message */
-  #msg { z-index: 3; background: #000; display: flex; align-items: center; justify-content: space-between; padding: 0 7vw 8vh;
+  /* Le diaporama continue derrière le message ; un dégradé garde le texte lisible */
+  #msg { z-index: 3; display: flex; align-items: center; padding: 0 7vw 8vh;
     opacity: 0; transition: opacity .6s ease; }
   #msg.on { opacity: 1; }
-  #msg .main { flex: 1; min-width: 0; padding-right: 5vw; }
+  #msg .shade { position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(90deg, rgba(0,0,0,.94) 0%, rgba(0,0,0,.84) 42%, rgba(0,0,0,.3) 66%, rgba(0,0,0,0) 82%); }
+  body.is-idle #msg { background: #000; }
+  body.is-idle #msg .shade { display: none; }
+  #msg .main { position: relative; max-width: 62vw; }
+  #msg .side { display: none !important; }
   #msg .accent { width: 7vw; height: .7vh; background: var(--red); margin-bottom: 5vh; }
   #mTitle { font-size: 8vh; font-weight: 500; line-height: 1.12; letter-spacing: -.01em; }
   #mSub { font-size: 3.6vh; color: var(--muted); margin-top: 3vh; line-height: 1.35; font-weight: 300; }
@@ -64,7 +69,20 @@
   #mAt { font-size: 3.2vh; margin-top: 2vh; font-weight: 300; }
   #mBar { margin-top: 4vh; height: .5vh; width: 45vw; background: rgba(255,255,255,.15); }
   #mBar div { height: 100%; width: 100%; background: var(--red); transition: width 1s linear; }
-  #msg .side { width: 30vh; text-align: center; flex-shrink: 0; }
+  body.msg-cinema #msg { align-items: flex-end; padding: 0 6vw 5vh; color: rgba(255,255,255,.86); }
+  body.msg-cinema #msg .shade { background: linear-gradient(0deg, rgba(0,0,0,.92) 0%, rgba(0,0,0,.72) 22%, rgba(0,0,0,.15) 46%, rgba(0,0,0,0) 60%); }
+  body.msg-cinema #msg .main { max-width: none; width: 100%; display: flex; align-items: flex-end; justify-content: space-between; }
+  body.msg-cinema #msg .head { min-width: 0; padding-right: 4vw; }
+  body.msg-cinema #msg .accent { margin-bottom: 3vh; }
+  body.msg-cinema #mSub { font-size: 3.2vh; color: rgba(255,255,255,.58); margin-top: 1.8vh; }
+  body.msg-cinema #mCount { margin-top: 0; text-align: right; flex-shrink: 0; }
+  body.msg-cinema #mLabel { font-size: 2.3vh; }
+  body.msg-cinema #mNum { font-size: 15vh; }
+  body.msg-cinema #mUnit { font-size: 5vh; color: rgba(255,255,255,.58); }
+  body.msg-cinema #mAt { font-size: 2.8vh; margin-top: 1vh; color: rgba(255,255,255,.6); }
+  body.msg-cinema #mBar { display: none; }
+  body.msg-cinema.has-msg #brandbar { visibility: hidden; }
+  #msg .side-old { width: 30vh; text-align: center; flex-shrink: 0; }
   #msg .side .qr { background: #fff; padding: 2vh; border-radius: 1.6vh; width: 30vh; height: 30vh; }
   #msg .side h3 { font-size: 2.8vh; font-weight: 500; margin-top: 3vh; }
   #msg .side p { font-size: 2.2vh; color: var(--muted); margin-top: 1vh; line-height: 1.35; }
@@ -90,10 +108,13 @@
   </div>
 
   <div id="msg" class="full">
+    <div class="shade"></div>
     <div class="main">
-      <div class="accent"></div>
-      <div id="mTitle"></div>
-      <div id="mSub"></div>
+      <div class="head">
+        <div class="accent"></div>
+        <div id="mTitle"></div>
+        <div id="mSub"></div>
+      </div>
       <div id="mCount">
         <div id="mLabel"></div>
         <div id="mBig"><span id="mNum"></span><span id="mUnit"></span></div>
@@ -191,6 +212,7 @@
         document.body.classList.toggle('no-logo', display.logo === false);
         document.body.classList.toggle('no-clock', display.clock === false);
         document.body.classList.toggle('clock-center', display.clockPos === 'center');
+        document.body.classList.toggle('msg-cinema', display.msgStyle === 'cinema');
         renderMessage();
         updateMedia(expandMedia(rawMedia));
         $('offline').className = '';

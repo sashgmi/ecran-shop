@@ -194,6 +194,11 @@
       <label class="check" style="margin-top:0"><input type="checkbox" data-display="qr"> QR code « Réservez votre Test Drive »</label>
       <label class="check"><input type="checkbox" data-display="logo"> Logo Tesla (en bas à gauche)</label>
       <label class="check"><input type="checkbox" data-display="clock"> Date et heure</label>
+      <label>Style du message</label>
+      <div class="chips" id="msgStyle">
+        <button class="chip" data-style="left">Dégradé à gauche (A1)</button>
+        <button class="chip" data-style="cinema">Style cinéma (A3)</button>
+      </div>
       <label>Position de la date et de l’heure</label>
       <div class="chips" id="clockPos">
         <button class="chip" data-pos="right">À droite</button>
@@ -454,12 +459,13 @@ function renderPresetEdit() {
 }
 
 // --- Affichage TV (QR code, logo, date/heure) ---
-const DISPLAY_DEFAULTS = { qr: true, logo: true, clock: true, clockPos: 'right' };
+const DISPLAY_DEFAULTS = { qr: true, logo: true, clock: true, clockPos: 'right', msgStyle: 'left' };
 const display = () => Object.assign({}, DISPLAY_DEFAULTS, row.display || {});
 function renderDisplay() {
   const d = display();
   document.querySelectorAll('[data-display]').forEach(cb => { cb.checked = d[cb.dataset.display]; });
   document.querySelectorAll('#clockPos .chip').forEach(b => b.classList.toggle('sel', b.dataset.pos === d.clockPos));
+  document.querySelectorAll('#msgStyle .chip').forEach(b => b.classList.toggle('sel', b.dataset.style === d.msgStyle));
 }
 async function saveDisplay(patch) {
   const fresh = await fetchRow();
@@ -468,6 +474,8 @@ async function saveDisplay(patch) {
 }
 document.querySelectorAll('[data-display]').forEach(cb => cb.addEventListener('change', () =>
   act(() => saveDisplay({ [cb.dataset.display]: cb.checked }), cb.checked ? 'Affiché sur la TV' : 'Masqué sur la TV')));
+document.querySelectorAll('#msgStyle .chip').forEach(b => b.addEventListener('click', () =>
+  act(() => saveDisplay({ msgStyle: b.dataset.style }), 'Style du message enregistré')));
 document.querySelectorAll('#clockPos .chip').forEach(b => b.addEventListener('click', () =>
   act(() => saveDisplay({ clockPos: b.dataset.pos }), 'Position enregistrée')));
 
