@@ -334,7 +334,7 @@
       if (isVideo) {
         var p = el.play();
         if (p && p.catch) p.catch(function () {});
-        slideTimer = setTimeout(next, 3 * 60 * 1000); // sécurité si "ended" ne vient jamais
+        slideTimer = setTimeout(next, 20 * 60 * 1000); // sécurité si "ended" ne vient jamais
       } else if (media.length > 1) {
         slideTimer = setTimeout(next, state.slideSeconds * 1000);
       }
