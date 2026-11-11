@@ -56,3 +56,7 @@ drop policy if exists "media ajout equipe" on storage.objects;
 create policy "media ajout equipe" on storage.objects for insert to authenticated with check (bucket_id = 'media');
 drop policy if exists "media suppression equipe" on storage.objects;
 create policy "media suppression equipe" on storage.objects for delete to authenticated using (bucket_id = 'media');
+
+-- 5. Options d'affichage de la TV (QR code, logo, date/heure)
+alter table public.screen add column if not exists display jsonb not null
+  default '{"qr": true, "logo": true, "clock": true, "clockPos": "right"}'::jsonb;

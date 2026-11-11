@@ -189,6 +189,18 @@
       <div style="display:flex;gap:8px"><input type="number" id="slideSec" min="3" max="120" class="grow"><button id="saveSlide">OK</button></div>
     </div>
 
+    <h2>Affichage TV</h2>
+    <div class="card">
+      <label class="check" style="margin-top:0"><input type="checkbox" data-display="qr"> QR code « Réservez votre Test Drive »</label>
+      <label class="check"><input type="checkbox" data-display="logo"> Logo Tesla (en bas à gauche)</label>
+      <label class="check"><input type="checkbox" data-display="clock"> Date et heure</label>
+      <label>Position de la date et de l’heure</label>
+      <div class="chips" id="clockPos">
+        <button class="chip" data-pos="right">À droite</button>
+        <button class="chip" data-pos="center">En bas au centre</button>
+      </div>
+    </div>
+
     <h2>QR code client</h2>
     <div class="card">
       <label for="tdUrl">Lien « Réserver un Test Drive »</label>
@@ -332,6 +344,7 @@ function apply(r) {
   if (document.activeElement !== $('#slideSec')) $('#slideSec').value = r.slide_seconds;
   if (document.activeElement !== $('#tdUrl')) $('#tdUrl').value = r.test_drive_url || '';
   $('#tdOpen').href = r.test_drive_url || '#';
+  renderDisplay();
 }
 
 function renderStatus() {
@@ -439,6 +452,24 @@ function renderPresetEdit() {
       h('button', { 'aria-label': 'Supprimer', onclick: () => confirm('Supprimer ce raccourci ?') && savePresets(list.filter(x => x !== p)) }, '✕')))
     : [h('div', { class: 'muted' }, 'Aucun raccourci.')]));
 }
+
+// --- Affichage TV (QR code, logo, date/heure) ---
+const DISPLAY_DEFAULTS = { qr: true, logo: true, clock: true, clockPos: 'right' };
+const display = () => Object.assign({}, DISPLAY_DEFAULTS, row.display || {});
+function renderDisplay() {
+  const d = display();
+  document.querySelectorAll('[data-display]').forEach(cb => { cb.checked = d[cb.dataset.display]; });
+  document.querySelectorAll('#clockPos .chip').forEach(b => b.classList.toggle('sel', b.dataset.pos === d.clockPos));
+}
+async function saveDisplay(patch) {
+  const fresh = await fetchRow();
+  if (!('display' in fresh)) { renderDisplay(); throw new Error('Mise à jour de la base nécessaire (voir avec Sasha)'); }
+  await save({ display: Object.assign({}, DISPLAY_DEFAULTS, fresh.display || {}, patch) });
+}
+document.querySelectorAll('[data-display]').forEach(cb => cb.addEventListener('change', () =>
+  act(() => saveDisplay({ [cb.dataset.display]: cb.checked }), cb.checked ? 'Affiché sur la TV' : 'Masqué sur la TV')));
+document.querySelectorAll('#clockPos .chip').forEach(b => b.addEventListener('click', () =>
+  act(() => saveDisplay({ clockPos: b.dataset.pos }), 'Position enregistrée')));
 
 // --- Médias ---
 async function uploadMedia(file) {

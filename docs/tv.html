@@ -35,6 +35,8 @@
   #brandbar .word { height: 2vh; }
   #clock { font-size: 3.4vh; font-weight: 300; font-variant-numeric: tabular-nums; white-space: nowrap; }
   #clockDate { color: var(--muted); margin-right: 1.2vw; }
+  body.no-logo #brandbar .brand, body.no-clock #clock { visibility: hidden; }
+  body.clock-center #clock { position: absolute; left: 50%; bottom: 3.5vh; transform: translateX(-50%); }
 
   /* Petit QR pendant le diaporama */
   #qrCorner { position: fixed; top: 4vh; right: 3vw; z-index: 4; background: rgba(0,0,0,.55); border-radius: 1.2vh; padding: 1.4vh;
@@ -173,7 +175,7 @@
   }
 
   function poll() {
-    rest('screen?id=eq.1&select=message,media,slide_seconds,test_drive_url')
+    rest('screen?id=eq.1&select=*')
       .then(function (rows) {
         var row = rows[0];
         if (!row) throw new Error('vide');
@@ -184,7 +186,11 @@
           slideSeconds: row.slide_seconds,
         };
         rawMedia = row.media || [];
-        renderQr(row.test_drive_url || '');
+        var display = row.display || {};
+        renderQr(display.qr === false ? '' : (row.test_drive_url || ''));
+        document.body.classList.toggle('no-logo', display.logo === false);
+        document.body.classList.toggle('no-clock', display.clock === false);
+        document.body.classList.toggle('clock-center', display.clockPos === 'center');
         renderMessage();
         updateMedia(expandMedia(rawMedia));
         $('offline').className = '';
